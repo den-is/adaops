@@ -1,6 +1,8 @@
 # adaops - Cardano CLI Ops automation
 
-A wrapper ops library mainly around **cardano-cli** and some other helpful funtions to script tedious Cardano workflows in the terminal.
+A collection of usefull functions to automate different workflows.
+Mainly it is wrapper around **cardano-cli** and bunch of other helpful methods.
+Provided by [SOUL pool](https://pooltool.io/pool/3866bed6c94a75ab0290bc86d83467c6557cf2275e8d49b3d727c78c).
 
 ### Requirements
 - **cardano-cli** - binary should be discoverable in the `$PATH`
