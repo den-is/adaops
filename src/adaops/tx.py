@@ -32,20 +32,16 @@ def build_tx(tx_in_list, tx_out_list, fee=0, invalid_hereafter=0, withdrawal=Fal
     else:
         withdrawal_args=''
 
-    cmd = [
-        "sh",
-        "-c",
-        f'''cardano-cli transaction build-raw \
-            {tx_in_args} \
-            {tx_out_args} \
-            --invalid-hereafter {invalid_hereafter} \
-            --fee {fee} \
-            --out-file {output_fname} \
-            {certs_args} {withdrawal_args}'''
-    ]
+    cmd = f'''cardano-cli transaction build-raw \
+        {tx_in_args} \
+        {tx_out_args} \
+        --invalid-hereafter {invalid_hereafter} \
+        --fee {fee} \
+        --out-file {output_fname} \
+        {certs_args} {withdrawal_args}'''
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
@@ -61,6 +57,7 @@ def build_tx(tx_in_list, tx_out_list, fee=0, invalid_hereafter=0, withdrawal=Fal
             print("Was not able to build Transaction Draft")
         else:
             print("Was not able to build Raw Transaction")
+        print('Failed command was:', cmd)
         sys.exit(1)
 
     return f'{cwd}/{output_fname}'
@@ -75,21 +72,17 @@ def get_tx_fee(tx_file='tx.draft', tx_in_count=1, tx_out_count=1, witnesses=1, b
     - payment.skey stake.skey - stake address registration
     '''
 
-    cmd = [
-        "sh",
-        "-c",
-        f'''cardano-cli transaction calculate-min-fee \
-            --tx-body-file {tx_file} \
-            --tx-in-count {tx_in_count} \
-            --tx-out-count {tx_out_count} \
-            --witness-count {witnesses} \
-            --byron-witness-count {byron_witnesses} \
-            --protocol-params-file {protocol_f_loc} \
-            {network}'''
-    ]
+    cmd = f'''cardano-cli transaction calculate-min-fee \
+        --tx-body-file {tx_file} \
+        --tx-in-count {tx_in_count} \
+        --tx-out-count {tx_out_count} \
+        --witness-count {witnesses} \
+        --byron-witness-count {byron_witnesses} \
+        --protocol-params-file {protocol_f_loc} \
+        {network}'''
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
@@ -102,6 +95,7 @@ def get_tx_fee(tx_file='tx.draft', tx_in_count=1, tx_out_count=1, witnesses=1, b
     if process_rc != 0:
         print("Was not able to calculate fees")
         print(process_stdout_bytes.decode("utf-8"))
+        print('Failed command was:', cmd)
         sys.exit(1)
 
     tx_fee_lovelace_bytes = process.stdout.read()
@@ -125,18 +119,14 @@ def sign_tx(tx_file, signing_keys_list, output_fname='tx.signed', network='--mai
 
     signing_keys_args = ' '.join(['--signing-key-file {}'.format(skey) for skey in signing_keys_list])
 
-    cmd = [
-        "sh",
-        "-c",
-        f'''cardano-cli transaction sign \
-            --tx-body-file {tx_file} \
-            {signing_keys_args} \
-            {network} \
-            --out-file {output_fname}'''
-    ]
+    cmd = f'''cardano-cli transaction sign \
+        --tx-body-file {tx_file} \
+        {signing_keys_args} \
+        {network} \
+        --out-file {output_fname}'''
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
@@ -149,6 +139,7 @@ def sign_tx(tx_file, signing_keys_list, output_fname='tx.signed', network='--mai
     if process_rc != 0:
         print(proc_stdout_bytes.decode('utf-8'))
         print('Signing TX did not work.')
+        print('Failed command was:', cmd)
         sys.exit(1)
     else:
         print(proc_stdout_bytes.decode('utf-8'))
@@ -162,14 +153,11 @@ def submit_tx(signed_tx_f='tx.signed', network='--mainnet', cwd=None):
     requires CARDANO_NODE_SOCKET env variable
     should run on online machine
     '''
-    cmd = [
-        "sh",
-        "-c",
-        f"cardano-cli transaction submit --tx-file {signed_tx_f} {network}"
-    ]
+
+    cmd = f"cardano-cli transaction submit --tx-file {signed_tx_f} {network}"
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
@@ -180,6 +168,7 @@ def submit_tx(signed_tx_f='tx.signed', network='--mainnet', cwd=None):
 
     if process_rc != 0:
         print('Submiting TX did not work.')
+        print('Failed command was:', cmd)
 
     process_out_bytes = process.stdout.read()
     print(process_out_bytes.decode("utf-8"))
