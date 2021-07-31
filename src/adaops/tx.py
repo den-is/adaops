@@ -2,16 +2,32 @@ import sys
 import subprocess
 
 
-def build_tx(tx_in_list, tx_out_list, fee=0, invalid_hereafter=0, withdrawal=False, stake_addr='', certs=[], output_fname='tx.draft', draft=True, cwd=None):
-    ''' tx_in_list  - list of input transaction hashes with index. list of strings. string format: "tx_hash#tx_idx"
+def build_tx(
+        tx_in_list,
+        tx_out_list,
+        fee               = 0,
+        invalid_hereafter = 0,
+        withdrawal        = False,
+        stake_addr        = '',
+        certs             = [],
+        output_fname      = 'tx.draft',
+        draft             = True,
+        cwd               = None):
+
+    '''Generates unsigned transaction file. Either draft or raw. Usually should run on air-gapped machine.
+
+        Is able to generate transactions:
+        - Between two or more peers - "simple transaction between receiving addresses"
+        - Withdrawing staking rewards from a stake address.
+        - Registering certificates on the blockchain.
+
+        tx_in_list  - list of input transaction hashes with index. list of strings. string format: "tx_hash#tx_idx"
         tx_out_list - list of output/destination addresses. string format: "address+amount"
         certs - certificates to include and register on blockchain.
                 should be list of strings representing full path to certificates.
         output_fname - convention used in many examples:
                        "tx.draft" for a transaction draft
                        "tx.raw" for the actual transaction.
-
-    Runs on an air-gapped offline machine
     '''
 
     certs_args = ""
@@ -63,7 +79,16 @@ def build_tx(tx_in_list, tx_out_list, fee=0, invalid_hereafter=0, withdrawal=Fal
     return f'{cwd}/{output_fname}'
 
 
-def get_tx_fee(tx_file='tx.draft', tx_in_count=1, tx_out_count=1, witnesses=1, byron_witnesses=0, protocol_f_loc='../protocol.json', network='--mainnet', cwd=None):
+def get_tx_fee(
+        tx_file         = 'tx.draft',
+        tx_in_count     = 1,
+        tx_out_count    = 1,
+        witnesses       = 1,
+        byron_witnesses = 0,
+        protocol_f_loc  = '../protocol.json',
+        network         = '--mainnet',
+        cwd             = None):
+
     ''' Witnesses are the number of keys that will be signing the transaction.
     Examples:
     - at least payment.skey - usual transaction
