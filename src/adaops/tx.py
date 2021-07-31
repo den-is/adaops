@@ -1,6 +1,7 @@
 import sys
 import subprocess
 
+from lib import check_socket_env_var
 
 def build_tx(
         tx_in_list,
@@ -14,7 +15,7 @@ def build_tx(
         draft             = True,
         cwd               = None):
 
-    '''Generates unsigned transaction file. Either draft or raw. Usually should run on air-gapped machine.
+    '''Generates unsigned transaction file. Either draft or raw. Usually should be run on air-gapped machine.
 
         Is able to generate transactions:
         - Between two or more peers - "simple transaction between receiving addresses"
@@ -90,12 +91,16 @@ def get_tx_fee(
         cwd             = None):
 
     ''' Witnesses are the number of keys that will be signing the transaction.
+    Runs on online node.
+
     Examples:
     - at least payment.skey - usual transaction
     - cold.skey stake.skey payment.skey - pool registration
     - cold.skey payment.skey - pool deregisratoin
     - payment.skey stake.skey - stake address registration
     '''
+
+    check_socket_env_var()
 
     cmd = f'''cardano-cli transaction calculate-min-fee \
         --tx-body-file {tx_file} \
@@ -178,6 +183,8 @@ def submit_tx(signed_tx_f='tx.signed', network='--mainnet', cwd=None):
     requires CARDANO_NODE_SOCKET env variable
     should run on online machine
     '''
+
+    check_socket_env_var()
 
     cmd = f"cardano-cli transaction submit --tx-file {signed_tx_f} {network}"
 

@@ -39,7 +39,9 @@ def check_socket_env_var():
     '''
 
     if not os.getenv('CARDANO_NODE_SOCKET_PATH'):
-        print('Not able to find CARDANO_NODE_SOCKET_PATH environment variable.\nMake sure to set it before running the script.')
+        print('Not able to find CARDANO_NODE_SOCKET_PATH environment variable.')
+        print('Make sure that you are running on a node with active and fully synced cardano-node process.')
+        print('If not satifies above statement make sure to at least set the CARDANO_NODE_SOCKET_PATH env variable.')
         sys.exit(1)
 
     return True
