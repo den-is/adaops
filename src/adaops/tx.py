@@ -171,8 +171,6 @@ def sign_tx(tx_file, signing_keys_list, output_fname='tx.signed', network='--mai
         print('Signing TX did not work.')
         print('Failed command was:', cmd)
         sys.exit(1)
-    else:
-        print(decoded_output)
 
     return f'{cwd}/{output_fname}'
 
@@ -206,4 +204,4 @@ def submit_tx(signed_tx_f='tx.signed', network='--mainnet', cwd=None):
         print(decoded_output)
         sys.exit(1)
 
-    print(decoded_output)
+    print(decoded_output.rstrip())
