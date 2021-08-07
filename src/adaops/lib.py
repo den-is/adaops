@@ -240,13 +240,14 @@ def get_current_tip(network='--mainnet'):
     process_rc = process.returncode
 
     process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         print("Was not able to get the current tip")
-        print(process_stdout_bytes.decode("utf-8"))
+        print(decoded_output)
         sys.exit(1)
 
-    current_slot = json.loads(process.stdout.read())['slot']
+    current_slot = json.loads(decoded_output)['slot']
 
     return current_slot
 
@@ -272,13 +273,14 @@ def get_current_epoch(network='--mainnet'):
     process.wait()
     process_rc = process.returncode
     process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         print("Was not able to create pool deregistration cert")
-        print(process_stdout_bytes.decode("utf-8"))
+        print(decoded_output)
         sys.exit(1)
 
-    return json.loads(process.stdout.read())['epoch']
+    return json.loads(decoded_output)['epoch']
 
 
 def get_metadata_hash(metadata_f, cwd=None):
@@ -316,14 +318,14 @@ def get_metadata_hash(metadata_f, cwd=None):
 
     process.wait()
     process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         print("Owner's Delegation cert creation didn't work")
-        stdout_bytes = process.stdout.read()
-        print(stdout_bytes.decode("utf-8"))
+        print(decoded_output)
         sys.exit(1)
 
-    exe_metadata_hash_bytes = process.stdout.read()
-    pool_metadata_hash = exe_metadata_hash_bytes.decode("utf-8").strip()
+    pool_metadata_hash = decoded_output.strip()
 
     return pool_metadata_hash

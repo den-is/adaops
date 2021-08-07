@@ -163,15 +163,16 @@ def sign_tx(tx_file, signing_keys_list, output_fname='tx.signed', network='--mai
     process.wait()
     process_rc = process.returncode
 
-    proc_stdout_bytes = process.stdout.read()
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print(proc_stdout_bytes.decode('utf-8'))
+        print(decoded_output)
         print('Signing TX did not work.')
         print('Failed command was:', cmd)
         sys.exit(1)
     else:
-        print(proc_stdout_bytes.decode('utf-8'))
+        print(decoded_output)
 
     return f'{cwd}/{output_fname}'
 
@@ -196,10 +197,13 @@ def submit_tx(signed_tx_f='tx.signed', network='--mainnet', cwd=None):
 
     process.wait()
     process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         print('Submiting TX did not work.')
         print('Failed command was:', cmd)
+        print(decoded_output)
+        sys.exit(1)
 
-    process_out_bytes = process.stdout.read()
-    print(process_out_bytes.decode("utf-8"))
+    print(decoded_output)

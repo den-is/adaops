@@ -32,13 +32,14 @@ def get_pool_id(cold_vkey='cold.vkey', cwd=None):
     process_rc = process.returncode
 
     process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print(process_stdout_bytes.decode("utf-8"))
+        print(decoded_output)
         print('Not able to get pool ID')
         sys.exit(1)
 
-    return process_stdout_bytes.decode("utf-8").strip()
+    return decoded_output.strip()
 
 
 def get_pool_stake_snapshot(pool_id, network='--mainnet'):
