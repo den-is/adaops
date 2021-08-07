@@ -1,7 +1,7 @@
 import sys
 import subprocess
 
-from lib import check_socket_env_var
+from adaops.lib import check_socket_env_var
 
 def build_tx(
         tx_in_list,
@@ -121,16 +121,15 @@ def get_tx_fee(
     process.wait()
     process_rc = process.returncode
     process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         print("Was not able to calculate fees")
-        print(process_stdout_bytes.decode("utf-8"))
+        print(decoded_output)
         print('Failed command was:', cmd)
         sys.exit(1)
 
-    tx_fee_lovelace_bytes = process.stdout.read()
-    tx_fee_lovelace = int(tx_fee_lovelace_bytes.decode("utf-8").split(' ')[0])
-    # print('Transaction fee:', tx_fee_lovelace)
+    tx_fee_lovelace = int(decoded_output.split(' ')[0])
 
     return tx_fee_lovelace
 
