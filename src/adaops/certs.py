@@ -12,19 +12,15 @@ def generate_node_cert(kes_vkey, cold_skey, cold_counter, kes_period, output_nam
     kes_period - integer, current KES period
     '''
 
-    cmd = [
-        "sh",
-        "-c",
-        f'''cardano-cli node issue-op-cert \
-            --kes-verification-key-file {kes_vkey} \
-            --cold-signing-key-file {cold_skey} \
-            --operational-certificate-issue-counter {cold_counter} \
-            --kes-period {kes_period} \
-            --out-file {output_name}'''
-    ]
+    cmd = f'''cardano-cli node issue-op-cert \
+        --kes-verification-key-file {kes_vkey} \
+        --cold-signing-key-file {cold_skey} \
+        --operational-certificate-issue-counter {cold_counter} \
+        --kes-period {kes_period} \
+        --out-file {output_name}'''
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
@@ -32,12 +28,13 @@ def generate_node_cert(kes_vkey, cold_skey, cold_counter, kes_period, output_nam
 
     process.wait()
     process_rc = process.returncode
-
     process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         print("Was not able to generate node cert")
-        print(process_stdout_bytes.decode('utf-8'))
+        print(decoded_output)
+        print('Failed command was:', cmd)
         sys.exit(1)
 
     return f'{cwd}/{output_name}'
@@ -49,16 +46,12 @@ def generate_stake_reg_cert(output_name='stake.cert', stake_vkey='stake.vkey', c
     Runs on an air-gapped offline machine
     '''
 
-    cmd = [
-        "sh",
-        "-c",
-        f'''cardano-cli stake-address registration-certificate \
-            --stake-verification-key-file {stake_vkey} \
-            --out-file {output_name}'''
-    ]
+    cmd = f'''cardano-cli stake-address registration-certificate \
+        --stake-verification-key-file {stake_vkey} \
+        --out-file {output_name}'''
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
@@ -66,10 +59,13 @@ def generate_stake_reg_cert(output_name='stake.cert', stake_vkey='stake.vkey', c
 
     process.wait()
     process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         print("Was not able to create stake registration cert")
-        print(process.stdout.read())
+        print(decoded_output)
+        print('Failed command was:', cmd)
         sys.exit(1)
 
     return f'{cwd}/{output_name}'
@@ -80,17 +76,14 @@ def generate_delegation_cert(output_name, owner_stake_vkey, cold_vkey, cwd=None)
 
     Runs on an air-gapped offline machine
     '''
-    cmd = [
-        "sh",
-        "-c",
-        f'''cardano-cli stake-address delegation-certificate \
-            --stake-verification-key-file {owner_stake_vkey} \
-            --cold-verification-key-file {cold_vkey} \
-            --out-file {output_name}'''
-    ]
+
+    cmd = f'''cardano-cli stake-address delegation-certificate \
+        --stake-verification-key-file {owner_stake_vkey} \
+        --cold-verification-key-file {cold_vkey} \
+        --out-file {output_name}'''
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
@@ -98,9 +91,13 @@ def generate_delegation_cert(output_name, owner_stake_vkey, cold_vkey, cwd=None)
 
     process.wait()
     process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         print("Owner's Delegation cert creation didn't work")
+        print(decoded_output)
+        print('Failed command was:', cmd)
         sys.exit(1)
 
     return f'{cwd}/{output_name}'
@@ -141,7 +138,7 @@ def generate_pool_reg_cert(cold_vkey,
         sys.exit(1)
 
     owners_stake_vkeys_args = ' '.join(['--pool-owner-stake-verification-key-file {}'.format(vkey_path) for vkey_path in owners_stake_vkeys_list])
-    print('owner_keys_in_cert', owners_stake_vkeys_args)
+    # print('owner_keys_in_cert', owners_stake_vkeys_args)
 
     if not relays_dns_list and not relays_ipv4_list:
         print('Neither relays_dns_list or relays_ipv4_list supplied')
@@ -155,26 +152,22 @@ def generate_pool_reg_cert(cold_vkey,
     # if debug:
     #     print('relays:', final_relays_list)
 
-    cmd = [
-        "sh",
-        "-c",
-        f'''cardano-cli stake-pool registration-certificate \
-            --cold-verification-key-file {cold_vkey} \
-            --vrf-verification-key-file {vrf_vkey} \
-            --pool-pledge {pledge_amt} \
-            --pool-cost {pool_cost} \
-            --pool-margin {margin} \
-            --pool-reward-account-verification-key-file {reward_stake_vkey} \
-            --metadata-url {metadata_url} \
-            --metadata-hash {metadata_hash} \
-            {owners_stake_vkeys_args} \
-            {final_relays_list} \
-            {network} \
-            --out-file {output_fname}'''
-    ]
+    cmd = f'''cardano-cli stake-pool registration-certificate \
+        --cold-verification-key-file {cold_vkey} \
+        --vrf-verification-key-file {vrf_vkey} \
+        --pool-pledge {pledge_amt} \
+        --pool-cost {pool_cost} \
+        --pool-margin {margin} \
+        --pool-reward-account-verification-key-file {reward_stake_vkey} \
+        --metadata-url {metadata_url} \
+        --metadata-hash {metadata_hash} \
+        {owners_stake_vkeys_args} \
+        {final_relays_list} \
+        {network} \
+        --out-file {output_fname}'''
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
@@ -182,10 +175,13 @@ def generate_pool_reg_cert(cold_vkey,
 
     process.wait()
     process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print(process.stdout.read())
+        print(decoded_output)
         print("Pool registration certificate creation didn't work")
+        print('Failed command was:', cmd)
         sys.exit(1)
 
     return f'{cwd}/{output_fname}'
@@ -196,17 +192,14 @@ def generate_deregistration_cert(cold_vkey, epoch, output_name='pool-deregistrat
 
     Runs on an air-gapped offline machine
     '''
-    cmd = [
-        "sh",
-        "-c",
-        f'''cardano-cli stake-pool deregistration-certificate \
-            --cold-verification-key-file {cold_vkey} \
-            --epoch {epoch} \
-            --out-file {output_name}'''
-    ]
+
+    cmd = f'''cardano-cli stake-pool deregistration-certificate \
+        --cold-verification-key-file {cold_vkey} \
+        --epoch {epoch} \
+        --out-file {output_name}'''
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
@@ -214,9 +207,13 @@ def generate_deregistration_cert(cold_vkey, epoch, output_name='pool-deregistrat
 
     process.wait()
     process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         print("Was not able to create pool deregistration cert")
+        print(decoded_output)
+        print('Failed command was:', cmd)
         sys.exit(1)
 
     return f'{cwd}/{output_name}'
