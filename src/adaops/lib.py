@@ -4,6 +4,8 @@ import sys
 import json
 import math
 import subprocess
+import urllib.request
+import shutil
 
 from pathlib import Path
 from json import JSONDecodeError
@@ -329,3 +331,32 @@ def get_metadata_hash(metadata_f, cwd=None):
     pool_metadata_hash = decoded_output.strip()
 
     return pool_metadata_hash
+
+
+def download_meta(meta_url, dst_path):
+    """Downloads Pool's metadata JSON file.
+
+    Actually that can be URL to whatever valid JSON file - Not strictly checking Cardano metadata schema.
+    """
+    file_dst = Path(dst_path)
+
+    # python 3.7 is missing "missing_ok" argument for unlink()
+    if file_dst.exists():
+        file_dst.unlink()
+
+    with urllib.request.urlopen(meta_url) as response, open(file_dst, 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
+
+    valid_json_file = False
+    with open(file_dst, 'r') as meta_f:
+        try:
+            json.load(meta_f)
+            valid_json_file = True
+        except ValueError as e:
+            print('Downloaded file is not a valid JSON file.', e)
+
+    if not valid_json_file:
+        print('Exiting')
+        sys.exit(1)
+
+    return file_dst
