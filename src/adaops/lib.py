@@ -219,8 +219,10 @@ def current_kes_period(current_slot, genesis_data):
     return math.floor(current_slot/slots_per_period)
 
 
-def get_current_tip(network='--mainnet'):
+def get_current_tip(item='slot', network='--mainnet'):
     '''Get current tip's slot of the blockchain
+    By default return current slot.
+    Possible options: 'slot', 'block', 'epoch', 'hash', 'era'
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH env var required
@@ -249,9 +251,15 @@ def get_current_tip(network='--mainnet'):
         print(decoded_output)
         sys.exit(1)
 
-    current_slot = json.loads(decoded_output)['slot']
+    output_dict = json.loads(decoded_output)
+    if item not in output_dict.keys():
+        items = ", ".join(output_dict.keys())
+        print(f'Item "{item}" is not available. Available list of items: {items}. Exiting.')
+        sys.exit(1)
 
-    return current_slot
+    current_tip_item = output_dict[item]
+
+    return current_tip_item
 
 
 def get_current_epoch(network='--mainnet'):
