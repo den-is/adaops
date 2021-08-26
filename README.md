@@ -9,6 +9,28 @@ Mainly it is wrapper around **cardano-cli** and bunch of other helpful methods.
 - **CARDANO_NODE_SOCKET_PATH** - Required for online operations. Env variable should be declared and pointing to existing socker of running cardano-node process.
 - Python 3.7+
 
+### Installation
+At this point of time I strongly recommend to use Python `venv`
+
+```sh
+cd ~
+
+# Get latest source code
+git clone https://github.com/den-is/adaops.git
+
+# Change directory to just cloned directory
+cd adaops
+
+# Create Python Virtual environment
+python3 -m venv venv
+
+# Activate just created Virtual environment
+source venv/bin/activate
+
+# Install just cloned source code into virtual environment
+pip install -e .
+```
+
 ### Example usage
 ```py
 from adaops.lib import get_current_tip
