@@ -262,37 +262,6 @@ def get_current_tip(item='slot', network='--mainnet'):
     return current_tip_item
 
 
-def get_current_epoch(network='--mainnet'):
-    '''Get current epoch
-
-    CARDANO_NODE_SOCKET is required
-    '''
-
-    cmd = [
-        "sh",
-        "-c",
-        f'''cardano-cli query tip {network}'''
-    ]
-
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
-    )
-
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
-        print("Was not able to create pool deregistration cert")
-        print(decoded_output)
-        sys.exit(1)
-
-    return json.loads(decoded_output)['epoch']
-
-
 def get_metadata_hash(metadata_f, cwd=None):
 
     metadata_json = {}
