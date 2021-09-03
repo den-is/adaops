@@ -4,7 +4,7 @@ import json
 import subprocess
 from json import JSONDecodeError
 
-from adaops.lib import check_file_exists
+from adaops.var import check_file_exists
 
 def get_pool_id(cold_vkey='cold.vkey', cwd=None):
     '''Returns Pool's ID

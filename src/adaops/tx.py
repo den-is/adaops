@@ -1,7 +1,7 @@
 import sys
 import subprocess
 
-from adaops.lib import check_socket_env_var
+from adaops.var import check_socket_env_var
 
 def build_tx(
         tx_in_list,
