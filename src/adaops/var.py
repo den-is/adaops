@@ -29,7 +29,7 @@ def check_file_exists(fpath):
         resolved = this_f.resolve(strict=True)
         return resolved
     except FileNotFoundError:
-        print("File not exists:", fpath)
+        print("File doesn not exist:", fpath)
         sys.exit(1)
 
 
@@ -125,6 +125,8 @@ def get_balances(address, network='--mainnet'):
     Returns tuple of hashes and their balances
     '''
 
+    check_socket_env_var()
+
     cmd = [
         "sh",
         "-c",
@@ -135,7 +137,6 @@ def get_balances(address, network='--mainnet'):
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        env=dict(os.environ, CARDANO_NODE_SOCKET_PATH="/opt/cardano/sockets/node.socket"),
     )
 
     process.wait()

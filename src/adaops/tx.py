@@ -1,7 +1,8 @@
 import sys
+import time
 import subprocess
 
-from adaops.var import check_socket_env_var
+from adaops.var import check_socket_env_var, check_file_exists, get_balances, lovelace2ada
 
 def build_tx(
         tx_in_list,
@@ -205,3 +206,66 @@ def submit_tx(signed_tx_f='tx.signed', network='--mainnet', cwd=None):
         sys.exit(1)
 
     print(decoded_output.rstrip())
+
+
+def get_tx_id(tx_file=None, tx_body_file=None):
+    '''Return transaction ID using either TX body file, or signed/final TX file
+
+    One of the inputs is required. In case if both are supplied 'tx_file' will take precedence.
+    '''
+
+    if not tx_file and not tx_body_file:
+        print("Either 'tx_file' or 'tx_body_file' should be provided. None provided")
+        sys.exit(1)
+
+    if tx_body_file and not tx_file:
+        cmd_tx_arg = '--tx-body-file'
+        check_file_exists(tx_file)
+        cmd = f"cardano-cli transaction txid {cmd_tx_arg} {tx_body_file}"
+    else:
+        cmd_tx_arg = '--tx-file'
+        check_file_exists(tx_file)
+        cmd = f"cardano-cli transaction txid {cmd_tx_arg} {tx_file}"
+
+    process = subprocess.Popen(
+        ["sh", "-c", cmd],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+
+    process.wait()
+    process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
+
+    if process_rc != 0:
+        print('Was not able to get transaction ID')
+        print('Failed command was:', cmd)
+        print(decoded_output)
+        sys.exit(1)
+
+    print(decoded_output.strip())
+    return(decoded_output.strip())
+
+
+def wait_for_tx(address, tx_id, timeout=60, network='--mainnet'):
+    '''Return transaction ID using either TX body file, or signed/final TX file
+
+    One of the inputs is required. In case if both are supplied 'tx_file' will take precedence.
+    '''
+
+    tx_arrived = False
+    while not tx_arrived and timeout > 0:
+
+        utxos = get_balances(address=address, network=network)
+
+        for utxo in utxos:
+            utxo_hash = utxo['hash'].split('#')[0]
+            if utxo_hash == tx_id:
+                tx_arrived = True
+                lovelace = utxo_hash['balance']
+                print(f'Transaction arrived: {tx_id}', '\nBalance {} A ({} L)'.format(lovelace2ada(lovelace), lovelace))
+                return
+
+        timeout -= 1
+        time.sleep(1)
