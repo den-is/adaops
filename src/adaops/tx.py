@@ -263,7 +263,7 @@ def wait_for_tx(address, tx_id, timeout=60, network='--mainnet'):
             utxo_hash = utxo['hash'].split('#')[0]
             if utxo_hash == tx_id:
                 tx_arrived = True
-                lovelace = utxo_hash['balance']
+                lovelace = utxo['balance']
                 print(f'Transaction arrived: {tx_id}', '\nBalance {} A ({} L)'.format(lovelace2ada(lovelace), lovelace))
                 return
 
