@@ -1,24 +1,6 @@
 import psutil
 import json
 from pathlib import Path
-from pprint import pprint
-
-# https://thispointer.com/python-check-if-a-process-is-running-by-name-and-find-its-process-id-pid/
-# https://thispointer.com/python-get-list-of-all-running-processes-and-sort-by-highest-memory-usage/
-
-# determine if process is running
-# find cardano-node config
-# find cardano-node home dir
-# find cardano-node genesis file in cardano-node config
-# determine network and magic
-# manually add path to config file
-# manually indicate path to genesis file
-# manually indicate path to protocol file
-
-# add ability to set custom process name
-# add ability to set cardano-node home directory
-# add ability to set configs files directory
-# add ability to set genesis files
 
 CARDANO_NODE_ARGS = {}
 
