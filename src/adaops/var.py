@@ -3,6 +3,7 @@ import re
 import sys
 import json
 import math
+import time
 import subprocess
 import urllib.request
 import shutil
@@ -220,7 +221,7 @@ def current_kes_period(current_slot, genesis_data):
     return math.floor(current_slot/slots_per_period)
 
 
-def get_current_tip(item='slot', network='--mainnet'):
+def get_current_tip(item='slot', retries=3, network='--mainnet'):
     '''Get current tip's slot of the blockchain
     By default return current slot.
     Possible options: 'slot', 'block', 'epoch', 'hash', 'era'
@@ -235,22 +236,36 @@ def get_current_tip(item='slot', network='--mainnet'):
         f"cardano-cli query tip {network}"
     ]
 
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
+    decoded_output = ""
 
-    process.wait()
-    process_rc = process.returncode
+    _retries = retries
+    exec_success = False
+    while not exec_success and _retries > 0:
+        _retries -= 1
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
 
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
+        process.wait()
+        process_rc = process.returncode
 
-    if process_rc != 0:
-        print("Was not able to get the current tip")
-        print(decoded_output)
-        sys.exit(1)
+        process_stdout_bytes = process.stdout.read()
+        decoded_output = process_stdout_bytes.decode("utf-8")
+
+        if process_rc != 0:
+            print("Was not able to get the current tip")
+            if decoded_output.startswith('MuxError'):
+                print('Got not fatal error:', decoded_output)
+                print('Going to retry after 3 seconds')
+                time.sleep(3)
+                continue
+            else:
+                print('Fatal error was:', decoded_output)
+                sys.exit(1)
+        else:
+            exec_success = True
 
     output_dict = json.loads(decoded_output)
     if item not in output_dict.keys():
