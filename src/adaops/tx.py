@@ -253,19 +253,26 @@ def wait_for_tx(address, tx_id, timeout=60, network='--mainnet'):
 
     One of the inputs is required. In case if both are supplied 'tx_file' will take precedence.
     '''
+    start_time = time.time()
+    elapsed_time = 0
 
     tx_arrived = False
-    while not tx_arrived and timeout > 0:
+
+    while not tx_arrived and elapsed_time < timeout:
 
         utxos = get_balances(address=address, network=network)
 
         for utxo in utxos:
             utxo_hash = utxo['hash'].split('#')[0]
             if utxo_hash == tx_id:
+                end_time = round(time.time() - start_time, 1)
                 tx_arrived = True
                 lovelace = utxo['balance']
-                print(f'Transaction arrived: {tx_id}', '\nBalance {} A ({} L)'.format(lovelace2ada(lovelace), lovelace))
+                print(f'Transaction {tx_id} arrived in {end_time} seconds', '\nBalance {} A ({} L)'.format(lovelace2ada(lovelace), lovelace))
                 return
 
-        timeout -= 1
+        elapsed_time = round(time.time() - start_time, 1)
         time.sleep(1)
+
+    if not tx_arrived and elapsed_time >= 0:
+        print(f'Transaction {tx_id} did not arrive after more than {elapsed_time} seconds.')
