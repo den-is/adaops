@@ -159,7 +159,7 @@ def get_balances(address, network='--mainnet'):
         print(e)
         sys.exit(1)
 
-    hashes = tuple({'hash': tx, 'balance': address_balances_json[tx]['value']['lovelace']} for tx in address_balances_json.keys())
+    hashes = tuple({'hash': utxo, 'balance': address_balances_json[utxo]['value']['lovelace']} for utxo in address_balances_json.keys())
 
     return hashes
 

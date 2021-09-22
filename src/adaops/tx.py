@@ -7,14 +7,16 @@ from adaops.var import check_socket_env_var, check_file_exists, get_balances, lo
 def build_tx(
         tx_in_list,
         tx_out_list,
-        fee               = 0,
-        invalid_hereafter = 0,
-        withdrawal        = False,
-        stake_addr        = '',
-        certs             = [],
-        output_fname      = 'tx.draft',
-        draft             = True,
-        cwd               = None):
+        fee                 = 0,
+        invalid_hereafter   = None,
+        withdrawal          = False,
+        stake_addr          = '',
+        certs               = [],
+        mint                = None,
+        minting_script_file = None,
+        output_fname        = 'tx.draft',
+        draft               = True,
+        cwd                 = None):
 
     '''Generates unsigned transaction file. Either draft or raw. Usually should be run on air-gapped machine.
 
@@ -45,18 +47,31 @@ def build_tx(
         print('"certs" argument should be a list. Received:', certs)
         sys.exit(1)
 
+    withdrawal_args=''
     if withdrawal and stake_addr:
         withdrawal_args = f'--withdrawal {stake_addr}'
-    else:
-        withdrawal_args=''
+
+    invalid_hereafter_args = ''
+    if invalid_hereafter != None:
+        invalid_hereafter_args = f'--invalid-hereafter {invalid_hereafter}'
+
+    minting_args = ''
+    if mint and minting_script_file:
+        check_file_exists(minting_script_file)
+        minting_args = f'--mint="{mint}" --minting-script-file {minting_script_file}'
+    elif mint and not minting_script_file:
+        print('Got "mint" string, but minting-script-file is missing. Both are required. Exiting.')
+        sys.exit(1)
+    elif minting_script_file and not mint:
+        print('Got "minting_script_file", but not a "mint"string . Both are required. Exiting.')
+        sys.exit(1)
 
     cmd = f'''cardano-cli transaction build-raw \
         {tx_in_args} \
-        {tx_out_args} \
-        --invalid-hereafter {invalid_hereafter} \
+        {tx_out_args} {invalid_hereafter_args} \
         --fee {fee} \
         --out-file {output_fname} \
-        {certs_args} {withdrawal_args}'''
+        {certs_args} {withdrawal_args} {minting_args}'''
 
     process = subprocess.Popen(
         ["sh", "-c", cmd],
