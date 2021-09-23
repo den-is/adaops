@@ -277,8 +277,8 @@ def wait_for_tx(address, tx_id, timeout=60, network='--mainnet'):
 
         utxos = get_balances(address=address, network=network)
 
-        for utxo in utxos:
-            utxo_hash = utxo['hash'].split('#')[0]
+        for utxo in utxos.keys():
+            utxo_hash = utxo.split('#')[0]
             if utxo_hash == tx_id:
                 end_time = round(time.time() - start_time, 1)
                 tx_arrived = True
