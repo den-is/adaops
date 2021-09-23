@@ -4,9 +4,9 @@ import sys
 import json
 import math
 import time
+import shutil
 import subprocess
 import urllib.request
-import shutil
 
 from pathlib import Path
 from json import JSONDecodeError
@@ -120,6 +120,16 @@ def get_balances(address, user_utxo=None, network='--mainnet'):
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
     Returns tuple of hashes and their balances
+
+    Example output:
+    {'utxo_hash1#1': {'lovelace': 1000000000},
+     'utxo_hash2#0': {'lovelace': 979279256,
+                      'tokens': {'policy_id_1': {'SecondTesttoken': 9995000,
+                                                 'Testtoken': 9999996
+                                                }
+                                }
+                     }
+    }
     '''
 
     check_socket_env_var()
