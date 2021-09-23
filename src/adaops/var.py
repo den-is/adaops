@@ -118,7 +118,7 @@ def ada2lovelace(ada):
         return int(ada * 1000000)
 
 
-def get_balances(address, network='--mainnet'):
+def get_balances(address, user_utxo=None, network='--mainnet'):
     '''Get all TX hashes with their balance under given address
 
     Runs on online machine.
@@ -128,14 +128,10 @@ def get_balances(address, network='--mainnet'):
 
     check_socket_env_var()
 
-    cmd = [
-        "sh",
-        "-c",
-        f"cardano-cli query utxo --address {address} {network} --out-file /dev/stdout"
-    ]
+    cmd = f"cardano-cli query utxo --address {address} {network} --out-file /dev/stdout"
 
     process = subprocess.Popen(
-        cmd,
+        cmd = ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -159,9 +155,27 @@ def get_balances(address, network='--mainnet'):
         print(e)
         sys.exit(1)
 
-    hashes = tuple({'hash': utxo, 'balance': address_balances_json[utxo]['value']['lovelace']} for utxo in address_balances_json.keys())
+    output = {}
 
-    return hashes
+    filtered_utxos = address_balances_json.keys() # by default include all existing utxo hashes
+    if user_utxo:
+        filtered_utxos = [utxo for utxo in address_balances_json.keys() if utxo.startswith(user_utxo)]
+        if not filtered_utxos:
+            print(f'Provided by user UTXO hash "{user_utxo}" does not exist under the given address "{address}"')
+        elif len(filtered_utxos) > 1:
+            print('Balances query has returned more than 1 hashes. Probably different indexes of the same utxo.')
+            print('Specify exact hash with index. Available hashes:', '\n'.join(filtered_utxos))
+
+    for utxo in filtered_utxos:
+        output[utxo] = {}
+        output[utxo]['lovelace'] = address_balances_json[utxo]['value']['lovelace']
+        if len(address_balances_json[utxo]['value'].keys()) > 1:
+            output[utxo]['tokens'] = {}
+            for key in address_balances_json[utxo]['value'].keys():
+                if key != 'lovelace':
+                    output[utxo]['tokens'][key] = address_balances_json[utxo]['value'][key]
+
+    return output
 
 
 def get_total_balance(address, network='--mainnet'):
@@ -182,14 +196,10 @@ def get_stake_rewards(stake_addr, network='--mainnet'):
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
     '''
 
-    cmd = [
-        "sh",
-        "-c",
-        f"cardano-cli query stake-address-info --address {stake_addr} {network}"
-    ]
+    cmd = f"cardano-cli query stake-address-info --address {stake_addr} {network}"
 
     process = subprocess.Popen(
-        cmd,
+        cmd = ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         env=dict(os.environ, CARDANO_NODE_SOCKET_PATH="/opt/cardano/sockets/node.socket"),
@@ -210,10 +220,8 @@ def get_stake_rewards(stake_addr, network='--mainnet'):
 
 
 def current_kes_period(current_slot, genesis_data):
-    '''???????????
-    probably not needed to lookup for a key in whole genesis data object.
-    Maybe just receiving required numbers will be fine.
-    ????????????
+    ''' Maybe just instead that function, that seems to simple and redundant,
+    better to query genesis file and do math, directly in some python script?
     '''
 
     slots_per_period = genesis_data['slotsPerKESPeriod']
@@ -224,17 +232,13 @@ def current_kes_period(current_slot, genesis_data):
 def get_current_tip(item='slot', retries=3, network='--mainnet'):
     '''Get current tip's slot of the blockchain
     By default return current slot.
-    Possible options: 'slot', 'block', 'epoch', 'hash', 'era'
+    Possible options: 'slot', 'epoch', 'syncProgress', 'block', 'hash', 'era'
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH env var required
     '''
 
-    cmd = [
-        "sh",
-        "-c",
-        f"cardano-cli query tip {network}"
-    ]
+    cmd = f"cardano-cli query tip {network}"
 
     decoded_output = ""
 
@@ -243,7 +247,7 @@ def get_current_tip(item='slot', retries=3, network='--mainnet'):
     while not exec_success and _retries > 0:
         _retries -= 1
         process = subprocess.Popen(
-            cmd,
+            cmd = ["sh", "-c", cmd],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
@@ -298,14 +302,10 @@ def get_metadata_hash(metadata_f, cwd=None):
         print('Pool description field value exceeds 255 characters. Chars:', len(metadata_json['description']))
         sys.exit(1)
 
-    cmd = [
-        "sh",
-        "-c",
-        f"cardano-cli stake-pool metadata-hash --pool-metadata-file {metadata_f}"
-    ]
+    cmd = f"cardano-cli stake-pool metadata-hash --pool-metadata-file {metadata_f}"
 
     process = subprocess.Popen(
-        cmd,
+        cmd = ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
