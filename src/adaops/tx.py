@@ -282,7 +282,7 @@ def wait_for_tx(address, tx_id, timeout=60, network='--mainnet'):
             if utxo_hash == tx_id:
                 end_time = round(time.time() - start_time, 1)
                 tx_arrived = True
-                lovelace = utxo['balance']
+                lovelace = utxos[utxo]['lovelace']
                 print(f'Transaction {tx_id} arrived in {end_time} seconds', '\nBalance {} A ({} L)'.format(lovelace2ada(lovelace), lovelace))
                 return
 
