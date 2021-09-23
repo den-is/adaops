@@ -73,14 +73,10 @@ def get_protocol_params(network='--mainnet'):
 
     check_socket_env_var()
 
-    cmd = [
-        "sh",
-        "-c",
-        f"cardano-cli query protocol-parameters {network}"
-    ]
+    cmd = f"cardano-cli query protocol-parameters {network}"
 
     process = subprocess.Popen(
-        cmd,
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -131,7 +127,7 @@ def get_balances(address, user_utxo=None, network='--mainnet'):
     cmd = f"cardano-cli query utxo --address {address} {network} --out-file /dev/stdout"
 
     process = subprocess.Popen(
-        cmd = ["sh", "-c", cmd],
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -199,7 +195,7 @@ def get_stake_rewards(stake_addr, network='--mainnet'):
     cmd = f"cardano-cli query stake-address-info --address {stake_addr} {network}"
 
     process = subprocess.Popen(
-        cmd = ["sh", "-c", cmd],
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         env=dict(os.environ, CARDANO_NODE_SOCKET_PATH="/opt/cardano/sockets/node.socket"),
@@ -247,7 +243,7 @@ def get_current_tip(item='slot', retries=3, network='--mainnet'):
     while not exec_success and _retries > 0:
         _retries -= 1
         process = subprocess.Popen(
-            cmd = ["sh", "-c", cmd],
+            ["sh", "-c", cmd],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
@@ -305,7 +301,7 @@ def get_metadata_hash(metadata_f, cwd=None):
     cmd = f"cardano-cli stake-pool metadata-hash --pool-metadata-file {metadata_f}"
 
     process = subprocess.Popen(
-        cmd = ["sh", "-c", cmd],
+        ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
