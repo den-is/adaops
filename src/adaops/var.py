@@ -182,7 +182,7 @@ def get_total_balance(address, network='--mainnet'):
     '''
 
     txs = get_balances(address=address, network=network)
-    return sum([tx['balance'] for tx in txs])
+    return sum([txs[tx]['lovelace'] for tx in txs])
 
 
 def get_stake_rewards(stake_addr, network='--mainnet'):
