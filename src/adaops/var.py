@@ -202,14 +202,23 @@ def get_stake_rewards(stake_addr, network='--mainnet'):
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
     '''
 
+    check_socket_env_var()
+
     cmd = f"cardano-cli query stake-address-info --address {stake_addr} {network}"
 
     process = subprocess.Popen(
         ["sh", "-c", cmd],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        env=dict(os.environ, CARDANO_NODE_SOCKET_PATH="/opt/cardano/sockets/node.socket"),
     )
+
+    process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+
+    if process_rc != 0:
+        print(process_stdout_bytes.decode("utf-8"))
+        print('Failed command was:', cmd)
+        sys.exit(1)
 
     try:
         balances_json = json.loads(process.stdout.read())
