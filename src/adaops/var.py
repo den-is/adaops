@@ -212,6 +212,7 @@ def get_stake_rewards(stake_addr, network='--mainnet'):
         stderr=subprocess.STDOUT,
     )
 
+    process.wait()
     process_rc = process.returncode
     process_stdout_bytes = process.stdout.read()
 
@@ -221,7 +222,7 @@ def get_stake_rewards(stake_addr, network='--mainnet'):
         sys.exit(1)
 
     try:
-        balances_json = json.loads(process.stdout.read())
+        balances_json = json.loads(process_stdout_bytes)
     except (ValueError, JSONDecodeError) as e:
         print('Not able to get stake address rewards balance')
         print(e)
