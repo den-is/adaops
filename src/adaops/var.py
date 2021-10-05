@@ -94,7 +94,7 @@ def get_protocol_params(network='--mainnet'):
     return params
 
 
-def lovelace2ada(lovelace):
+def l2a(lovelace):
     '''Converts Lovelace into ADA
 
     Accepts Integer values only.
@@ -104,7 +104,7 @@ def lovelace2ada(lovelace):
         return float(lovelace / 1000000)
 
 
-def ada2lovelace(ada):
+def a2l(ada):
     '''Converts ADA into Lovelace.
 
     Accepts Integer and Float values only.

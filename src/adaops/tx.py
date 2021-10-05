@@ -2,7 +2,7 @@ import sys
 import time
 import subprocess
 
-from adaops.var import check_socket_env_var, check_file_exists, get_balances, lovelace2ada
+from adaops.var import check_socket_env_var, check_file_exists, get_balances, l2a
 
 def build_tx(
         tx_in_list,
@@ -283,7 +283,7 @@ def wait_for_tx(address, tx_id, timeout=60, network='--mainnet'):
                 end_time = round(time.time() - start_time, 1)
                 tx_arrived = True
                 lovelace = utxos[utxo]['lovelace']
-                print(f'Transaction {tx_id} arrived in {end_time} seconds', '\nBalance {} A ({} L)'.format(lovelace2ada(lovelace), lovelace))
+                print(f'Transaction {tx_id} arrived in {end_time} seconds', '\nBalance {} A ({} L)'.format(l2a(lovelace), lovelace))
                 return
 
         elapsed_time = round(time.time() - start_time, 1)
