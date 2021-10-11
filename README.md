@@ -35,7 +35,7 @@ pip install -e .
 
 ### Example usage
 ```py
-from adaops.lib import get_current_tip
+from adaops.var import get_current_tip
 tip = get_current_tip()
 print(tip)
 # 36019091
