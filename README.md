@@ -3,6 +3,8 @@
 A collection of usefull functions to automate different workflows.
 Mainly it is wrapper around **cardano-cli** and bunch of other helpful methods.
 
+:warning::hammer_and_wrench: Early development stage. Wear your helmet! :construction_worker:
+
 ### Requirements
 - **cardano-cli** - binary should be discoverable in the `$PATH`
 - **v1.27** - is a minimum supported version of cardano-cli (__cardano-node__)
