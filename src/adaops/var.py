@@ -83,15 +83,17 @@ def get_protocol_params(network='--mainnet'):
 
     try:
         params = json.loads(process.stdout.read())
+        return params
+
     except JSONDecodeError as e:
-        print('Was not able to get protocol parameters')
-        print(e)
-        sys.exit(1)
-    except ValueError as e:
+        print('Was not able to get/parse protocol parameters')
         print(e)
         sys.exit(1)
 
-    return params
+    except ValueError as e:
+        print('Was not able to get/parse protocol parameters')
+        print(e)
+        sys.exit(1)
 
 
 def l2a(lovelace):

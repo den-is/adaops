@@ -102,7 +102,7 @@ def get_tx_fee(
         tx_out_count    = 1,
         witnesses       = 1,
         byron_witnesses = 0,
-        protocol_f_loc  = '../protocol.json',
+        protocol_fpath  = '../protocol.json',
         network         = '--mainnet',
         cwd             = None):
 
@@ -117,6 +117,7 @@ def get_tx_fee(
     '''
 
     check_socket_env_var()
+    _protocol_fpath = check_file_exists(protocol_fpath)
 
     cmd = f'''cardano-cli transaction calculate-min-fee \
         --tx-body-file {tx_file} \
@@ -124,7 +125,7 @@ def get_tx_fee(
         --tx-out-count {tx_out_count} \
         --witness-count {witnesses} \
         --byron-witness-count {byron_witnesses} \
-        --protocol-params-file {protocol_f_loc} \
+        --protocol-params-file {_protocol_fpath} \
         {network}'''
 
     process = subprocess.Popen(
