@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import urllib.request
 
+from datetime import datetime
 from pathlib import Path
 from json import JSONDecodeError
 
@@ -294,6 +295,30 @@ def get_current_tip(item='slot', retries=3, network='--mainnet'):
     current_tip_item = output_dict[item]
 
     return current_tip_item
+
+
+def calculate_current_epoch(genesis_data):
+    """calculates current epoch based on system time and genesis file.
+    Is offline method in opposite to getting current Tip of the network.
+    genesis_data - JSON object containing Shelley genesis data.
+
+    cardano start - 2017-09-23T21:44:51Z
+
+    returns epoch - int
+    """
+    cardano_start_str = genesis_data.get('systemStart')
+    epoch_len = int(genesis_data.get('epochLength', 0))
+
+    if not cardano_start_str or not epoch_len:
+        print("Not able to find \"systemStart\" or \"epochLength\" in genesis data. Make sure you have passed correct genesis file.")
+        sys.exit(1)
+
+    now = datetime.utcnow()
+    cardano_start_dt = datetime.strptime(cardano_start_str, '%Y-%m-%dT%H:%M:%SZ')
+    start_now_diff = now - cardano_start_dt
+    diff_seconds = start_now_diff.total_seconds()
+
+    return int(diff_seconds/epoch_len)
 
 
 def get_metadata_hash(metadata_f, cwd=None):
