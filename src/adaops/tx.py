@@ -227,7 +227,9 @@ def submit_tx(signed_tx_f='tx.signed', network='--mainnet', cwd=None):
 def get_tx_id(tx_file=None, tx_body_file=None):
     '''Return transaction ID using either TX body file, or signed/final TX file
 
-    One of the inputs is required. In case if both are supplied 'tx_file' will take precedence.
+    One of two inputs is required.
+    tx_body_file - raw transaction draft file, unsigned
+    tx_file - signed transaction file. Has priority if both files provided.
     '''
 
     if not tx_file and not tx_body_file:
