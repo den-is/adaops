@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import urllib.request
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from json import JSONDecodeError
 
@@ -315,10 +315,52 @@ def calculate_current_epoch(genesis_data):
 
     now = datetime.utcnow()
     cardano_start_dt = datetime.strptime(cardano_start_str, '%Y-%m-%dT%H:%M:%SZ')
-    start_now_diff = now - cardano_start_dt
-    diff_seconds = start_now_diff.total_seconds()
+    time_since_start = now - cardano_start_dt
+    time_since_start_sec = time_since_start.total_seconds()
 
-    return int(diff_seconds/epoch_len)
+    return int(time_since_start_sec/epoch_len)
+
+
+def time_until_next_epoch(genesis_data):
+    """Calculates time until next epoch in seconds
+    """
+    cardano_start_str = genesis_data.get('systemStart')
+    epoch_len = int(genesis_data.get('epochLength', 0))
+
+    if not cardano_start_str or not epoch_len:
+        print("Not able to find \"systemStart\" or \"epochLength\" in genesis data. Make sure you have passed correct genesis file.")
+        sys.exit(1)
+
+    now = datetime.utcnow()
+    cardano_start_dt = datetime.strptime(cardano_start_str, '%Y-%m-%dT%H:%M:%SZ')
+    time_since_start = now - cardano_start_dt
+    time_since_start_sec = time_since_start.total_seconds()
+    current_epoch = int(time_since_start_sec/epoch_len)
+
+    next_epoch_in = epoch_len - (time_since_start_sec - current_epoch * epoch_len)
+
+    return round(next_epoch_in, 1)
+
+
+def calculate_epoch_date(epoch, genesis_data):
+    """Returns datetime object for specific epoch. UTC
+    epoch - int
+    genesis_data - JSON
+    """
+    cardano_start_str = genesis_data.get('systemStart')
+    epoch_len = int(genesis_data.get('epochLength', 0))
+
+    if not cardano_start_str or not epoch_len:
+        print("Not able to find \"systemStart\" or \"epochLength\" in genesis data. Make sure you have passed correct genesis file.")
+        sys.exit(1)
+
+    cardano_start_dt = datetime.strptime(cardano_start_str, '%Y-%m-%dT%H:%M:%SZ')
+
+    total_epoch_seconds =  epoch * epoch_len
+
+    epoch_date = cardano_start_dt + timedelta(seconds=total_epoch_seconds)
+
+    return epoch_date
 
 
 def get_metadata_hash(metadata_f, cwd=None):
