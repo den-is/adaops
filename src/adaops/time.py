@@ -41,6 +41,10 @@ def time_in_epoch(genesis_data):
     2019-07-24T20:20:16Z - cardano testnet start date
     432000 - epoch length/duration, in seconds. mainnet and testnet
 
+    Examples:
+    To calculate full days in epoch, i.e. determine first or last day:
+        int(time_in_epoch() / 86400 ) % 5
+
     returns:
     seconds - float, rounded to 1 digit after period
     """
