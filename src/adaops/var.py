@@ -234,8 +234,10 @@ def get_stake_rewards(stake_addr, network='--mainnet'):
 
 
 def current_kes_period(current_slot, genesis_data):
-    ''' Maybe just instead that function, that seems to simple and redundant,
-    better to query genesis file and do math, directly in some python script?
+    '''Returns Current KES period based on current tip of the network (slot).
+
+        current_tip_slot/genesis_data['slotsPerKESPeriod']
+
     '''
 
     slots_per_period = genesis_data['slotsPerKESPeriod']

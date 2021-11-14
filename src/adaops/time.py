@@ -1,5 +1,8 @@
 import sys
+import time
 from datetime import datetime, timedelta
+
+from adaops.var import get_current_tip
 
 
 def calculate_current_epoch(genesis_data):
@@ -42,8 +45,8 @@ def time_in_epoch(genesis_data):
     432000 - epoch length/duration, in seconds. mainnet and testnet
 
     Examples:
-    To calculate full days in epoch, i.e. determine first or last day:
-        int(time_in_epoch() / 86400 ) % 5
+        To calculate full days in epoch, i.e. to determine first or last days:
+            int(time_in_epoch() / 86400 ) % 5
 
     returns:
     seconds - float, rounded to 1 digit after period
@@ -116,3 +119,35 @@ def calculate_epoch_date(epoch, genesis_data):
     epoch_date = cardano_start_dt + timedelta(seconds=total_epoch_seconds)
 
     return epoch_date
+
+
+def kes_expiration_sec(remaining_kes_periods, genesis_data, network='--mainnet'):
+    """Returns seconds until current KES keys expiration
+
+    remaining_periods - int. returned by cardano-node metrics.
+        Or if pool's start KES period is known: genesis['maxKESEvolutions'] - (current_kes_period - start_kes_period)
+    genesis_data - json object representing Shelley genesis data
+
+    Returns:
+        {
+            'seconds_remaining': remaining_seconds, int
+            'expiration_timestamp': kes_ekpiration_timestamp, int
+        }
+    """
+    current_slot  = get_current_tip(network=network)
+    slot_length   = genesis_data.get('slotLength')           # mainnet = 1
+    slots_per_kes = genesis_data.get('slotsPerKESPeriod')    # mainnet = 129600
+
+    now_sec_since_epoch = int(time.time())
+
+    remaining_kes_seconds_total = slot_length * slots_per_kes * remaining_kes_periods
+    seconds_current_period = slot_length * (current_slot % slots_per_kes)
+
+    remaining_seconds = remaining_kes_seconds_total - seconds_current_period
+    kes_ekpiration_timestamp = now_sec_since_epoch + remaining_seconds
+    # or datetime.utcnow+timedelta(seconds=(remaining_kes_seconds_total - seconds_current_period))
+
+    return {
+        'seconds_remaining': remaining_seconds,
+        'expiration_timestamp': kes_ekpiration_timestamp
+    }
