@@ -298,6 +298,30 @@ def get_current_tip(item='slot', retries=3, network='--mainnet'):
     return current_tip_item
 
 
+def expected_slot(genesis_data, byron_genesis_data):
+    """Returns expected tip slot for post Byron eras.
+    Helps to determine cardano-node sync-status and catch sync issues.
+    """
+
+    # TODO: move that to constants or calculate automatically
+    shelley_start_epoch = 208
+
+    byron_slot_length  = byron_genesis_data.get('blockVersionData').get('slotDuration') / 1000
+    byron_epoch_length = byron_genesis_data.get('protocolConsts').get('k') * 10
+    byron_start        = byron_genesis_data.get('startTime')
+
+    slot_length   = int(genesis_data.get('slotLength'), 1)
+
+    byron_end   = byron_start + shelley_start_epoch * byron_epoch_length * byron_slot_length
+    byron_slots = shelley_start_epoch * byron_epoch_length
+
+    now_sec_since_epoch = int(time.time())
+
+    expected_slot = byron_slots + (now_sec_since_epoch - byron_end) / slot_length
+
+    return expected_slot
+
+
 def get_metadata_hash(metadata_f, cwd=None):
 
     metadata_json = {}
