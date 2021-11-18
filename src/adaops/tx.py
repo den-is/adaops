@@ -223,6 +223,8 @@ def submit_tx(signed_tx_f='tx.signed', network='--mainnet', cwd=None):
 
     print(decoded_output.rstrip())
 
+    return True
+
 
 def get_tx_id(tx_file=None, tx_body_file=None):
     '''Return transaction ID using either TX body file, or signed/final TX file
