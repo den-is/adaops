@@ -259,11 +259,12 @@ def get_tx_id(tx_file=None, tx_body_file=None):
     if process_rc != 0:
         print('Was not able to get transaction ID')
         print('Failed command was:', cmd)
-        print(decoded_output)
+        print(decoded_output.strip())
         sys.exit(1)
 
-    print(decoded_output.strip())
-    return(decoded_output.strip())
+    tx_id = decoded_output.strip()
+
+    return tx_id
 
 
 def wait_for_tx(address, tx_id, timeout=60, network='--mainnet'):
