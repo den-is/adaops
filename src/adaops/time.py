@@ -1,8 +1,11 @@
+import logging
 import sys
 import time
 from datetime import datetime, timedelta
 
 from adaops.var import get_current_tip
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_current_epoch(genesis_data):

@@ -1,7 +1,10 @@
 import json
+import logging
 from pathlib import Path
 
 import psutil
+
+logger = logging.getLogger(__name__)
 
 CARDANO_NODE_ARGS = {}
 

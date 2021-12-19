@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 import os
 import re
@@ -9,6 +10,8 @@ import time
 import urllib.request
 from json import JSONDecodeError
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def check_file_exists(fpath):
@@ -29,7 +32,7 @@ def check_file_exists(fpath):
         resolved = this_f.resolve(strict=True)
         return resolved
     except FileNotFoundError:
-        print("File doesn not exist:", fpath)
+        logger.error("File doesn not exist: %s", fpath)
         sys.exit(1)
 
 

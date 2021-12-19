@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -6,12 +7,14 @@ from json import JSONDecodeError
 
 from adaops.var import check_file_exists
 
+logger = logging.getLogger(__name__)
+
 
 def get_pool_id(cold_vkey="cold.vkey", cwd=None):
     """Returns Pool's ID"""
 
     if cwd:
-        checked_f = check_file_exists("{cwd}/{cold_vkey}")
+        checked_f = check_file_exists(f"{cwd}/{cold_vkey}")
     else:
         checked_f = check_file_exists(cold_vkey)
 

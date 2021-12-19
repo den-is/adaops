@@ -1,5 +1,8 @@
+import logging
 import subprocess
 import sys
+
+logger = logging.getLogger(__name__)
 
 
 def generate_node_cold_keys(name_prefix="cold", cwd=None):

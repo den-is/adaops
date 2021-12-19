@@ -1,8 +1,11 @@
+import logging
 import subprocess
 import sys
 import time
 
 from adaops.var import check_file_exists, check_socket_env_var, get_balances, l2a
+
+logger = logging.getLogger(__name__)
 
 
 def build_tx(
