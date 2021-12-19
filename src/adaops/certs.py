@@ -124,7 +124,8 @@ def generate_pool_reg_cert(
 ):
 
     """There might be multiple pool-owner-stake-verification keys
-    owners_vkeys - list of string paths to Stake VKEYs. Generate into appropriate argument internaly.
+    owners_vkeys - list of string paths to Stake VKEYs.
+                   Generate into appropriate argument internaly.
 
     All relays should be running on the same port.
 
@@ -144,7 +145,7 @@ def generate_pool_reg_cert(
 
     if not isinstance(owners_stake_vkeys_list, list):
         print(
-            "owners_stake_vkeys - should be a list of strings with full path to owner stake verification keys"
+            "owners_stake_vkeys - list of strings with full path to owner stake verification keys"
         )
         sys.exit(1)
 

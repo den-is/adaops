@@ -37,7 +37,7 @@ def check_socket_env_var():
     """Checks if CARDANO_NODE_SOCKET_PATH env var is set.
 
     Required for running "online" commands that will query the network.
-    If doesn't exist cardano-cli will not work for online commands. For example quering address UTXO.
+    For example to query address balance or network tip.
     """
 
     if not os.getenv("CARDANO_NODE_SOCKET_PATH"):
@@ -384,7 +384,8 @@ def get_metadata_hash(metadata_f, cwd=None):
 def download_meta(meta_url, dst_path):
     """Downloads Pool's metadata JSON file.
 
-    Actually that can be URL to whatever valid JSON file - Not strictly checking Cardano metadata schema.
+    Actually that can be URL to whatever valid JSON file.
+    Not strictly checking Cardano metadata schema.
     """
     file_dst = Path(dst_path)
 

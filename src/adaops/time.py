@@ -23,7 +23,8 @@ def calculate_current_epoch(genesis_data):
 
     if not cardano_start_str or not epoch_len:
         print(
-            'Not able to find "systemStart" or "epochLength" in genesis data. Make sure you have passed correct genesis file.'
+            'Not able to find "systemStart" or "epochLength" in genesis data. '
+            "Make sure you have passed correct genesis file."
         )
         sys.exit(1)
 
@@ -58,7 +59,8 @@ def time_in_epoch(genesis_data):
 
     if not cardano_start_str or not epoch_len:
         print(
-            'Not able to find "systemStart" or "epochLength" in genesis data. Make sure you have passed correct genesis file.'
+            'Not able to find "systemStart" or "epochLength" in genesis data. '
+            "Make sure you have passed correct genesis file."
         )
         sys.exit(1)
 
@@ -86,7 +88,8 @@ def time_until_next_epoch(genesis_data):
 
     if not cardano_start_str or not epoch_len:
         print(
-            'Not able to find "systemStart" or "epochLength" in genesis data. Make sure you have passed correct genesis file.'
+            'Not able to find "systemStart" or "epochLength" in genesis data. '
+            "Make sure you have passed correct genesis file."
         )
         sys.exit(1)
 
@@ -116,7 +119,8 @@ def calculate_epoch_date(epoch, genesis_data):
 
     if not cardano_start_str or not epoch_len:
         print(
-            'Not able to find "systemStart" or "epochLength" in genesis data. Make sure you have passed correct genesis file.'
+            'Not able to find "systemStart" or "epochLength" in genesis data. '
+            "Make sure you have passed correct genesis file."
         )
         sys.exit(1)
 
@@ -132,8 +136,9 @@ def calculate_epoch_date(epoch, genesis_data):
 def kes_expiration_sec(remaining_kes_periods, genesis_data, network="--mainnet"):
     """Returns seconds until current KES keys expiration
 
-    remaining_periods - int. returned by cardano-node metrics.
-        Or if pool's start KES period is known: genesis['maxKESEvolutions'] - (current_kes_period - start_kes_period)
+    remaining_periods - Int. returned by cardano-node metrics.
+                        Or if pool's start KES period is known:
+                        genesis['maxKESEvolutions'] - (current_kes_period - start_kes_period)
     genesis_data - json object representing Shelley genesis data
 
     Returns:

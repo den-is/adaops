@@ -45,13 +45,12 @@ def get_node_config(file_path="", proc_name="cardano-node"):
         if process_args:
             config_file = process_args.get("config", None)
         else:
-            print(
-                f'Was not able to find cardano-process and get cofniguration arguments from it. Process "{proc_name}"'
-            )
+            print("Was not able to find cardano-process and get configuration arguments from it.")
+            print(f"Process {proc_name}")
 
     if not config_file:
         print(
-            "Was not able to get config file. Provide config file path or provide correct process name"
+            "Was not able to get config file. Provide path to config file or correct process name"
         )
         return None, None
 
