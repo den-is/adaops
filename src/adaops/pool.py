@@ -1,14 +1,14 @@
-import os
-import sys
 import json
+import os
 import subprocess
+import sys
 from json import JSONDecodeError
 
 from adaops.var import check_file_exists
 
-def get_pool_id(cold_vkey='cold.vkey', cwd=None):
-    '''Returns Pool's ID
-    '''
+
+def get_pool_id(cold_vkey="cold.vkey", cwd=None):
+    """Returns Pool's ID"""
 
     if cwd:
         checked_f = check_file_exists("{cwd}/{cold_vkey}")
@@ -18,7 +18,7 @@ def get_pool_id(cold_vkey='cold.vkey', cwd=None):
     cmd = [
         "sh",
         "-c",
-        f"cardano-cli stake-pool id --cold-verification-key-file {checked_f} --output-format hex"
+        f"cardano-cli stake-pool id --cold-verification-key-file {checked_f} --output-format hex",
     ]
 
     process = subprocess.Popen(
@@ -36,23 +36,19 @@ def get_pool_id(cold_vkey='cold.vkey', cwd=None):
 
     if process_rc != 0:
         print(decoded_output)
-        print('Not able to get pool ID')
+        print("Not able to get pool ID")
         sys.exit(1)
 
     return decoded_output.strip()
 
 
-def get_pool_stake_snapshot(pool_id, network='--mainnet'):
-    '''Get active pool stake snapshot.
+def get_pool_stake_snapshot(pool_id, network="--mainnet"):
+    """Get active pool stake snapshot.
 
     CARDANO_NODE_SOCKET_PATH env var required
-    '''
+    """
 
-    cmd = [
-        "sh",
-        "-c",
-        f"cardano-cli query stake-snapshot --stake-pool-id {pool_id} {network}"
-    ]
+    cmd = ["sh", "-c", f"cardano-cli query stake-snapshot --stake-pool-id {pool_id} {network}"]
 
     process = subprocess.Popen(
         cmd,
@@ -73,17 +69,13 @@ def get_pool_stake_snapshot(pool_id, network='--mainnet'):
     return output
 
 
-def get_pool_params(pool_id, network='--mainnet'):
-    '''Get active pool parameters.
+def get_pool_params(pool_id, network="--mainnet"):
+    """Get active pool parameters.
 
     CARDANO_NODE_SOCKET_PATH env var required
-    '''
+    """
 
-    cmd = [
-        "sh",
-        "-c",
-        f"cardano-cli query pool-params --stake-pool-id {pool_id} {network}"
-    ]
+    cmd = ["sh", "-c", f"cardano-cli query pool-params --stake-pool-id {pool_id} {network}"]
 
     process = subprocess.Popen(
         cmd,

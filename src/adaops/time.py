@@ -18,19 +18,21 @@ def calculate_current_epoch(genesis_data):
 
     returns epoch - int
     """
-    cardano_start_str = genesis_data.get('systemStart')
-    epoch_len = int(genesis_data.get('epochLength', 0))
+    cardano_start_str = genesis_data.get("systemStart")
+    epoch_len = int(genesis_data.get("epochLength", 0))
 
     if not cardano_start_str or not epoch_len:
-        print("Not able to find \"systemStart\" or \"epochLength\" in genesis data. Make sure you have passed correct genesis file.")
+        print(
+            'Not able to find "systemStart" or "epochLength" in genesis data. Make sure you have passed correct genesis file.'
+        )
         sys.exit(1)
 
     now = datetime.utcnow()
-    cardano_start_dt = datetime.strptime(cardano_start_str, '%Y-%m-%dT%H:%M:%SZ')
+    cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
     time_since_start = now - cardano_start_dt
     time_since_start_sec = time_since_start.total_seconds()
 
-    return int(time_since_start_sec/epoch_len)
+    return int(time_since_start_sec / epoch_len)
 
 
 def time_in_epoch(genesis_data):
@@ -51,19 +53,21 @@ def time_in_epoch(genesis_data):
     returns:
     seconds - float, rounded to 1 digit after period
     """
-    cardano_start_str = genesis_data.get('systemStart')
-    epoch_len = int(genesis_data.get('epochLength', 0))
+    cardano_start_str = genesis_data.get("systemStart")
+    epoch_len = int(genesis_data.get("epochLength", 0))
 
     if not cardano_start_str or not epoch_len:
-        print("Not able to find \"systemStart\" or \"epochLength\" in genesis data. Make sure you have passed correct genesis file.")
+        print(
+            'Not able to find "systemStart" or "epochLength" in genesis data. Make sure you have passed correct genesis file.'
+        )
         sys.exit(1)
 
     now = datetime.utcnow()
-    cardano_start_dt = datetime.strptime(cardano_start_str, '%Y-%m-%dT%H:%M:%SZ')
+    cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
     time_since_start = now - cardano_start_dt
     time_since_start_sec = time_since_start.total_seconds()
-    current_epoch = int(time_since_start_sec/epoch_len)
-    total_epoch_seconds =  current_epoch * epoch_len
+    current_epoch = int(time_since_start_sec / epoch_len)
+    total_epoch_seconds = current_epoch * epoch_len
 
     return round(time_since_start_sec - total_epoch_seconds, 1)
 
@@ -77,18 +81,20 @@ def time_until_next_epoch(genesis_data):
     returns:
     seconds - float, rounded to 1 digit after period.
     """
-    cardano_start_str = genesis_data.get('systemStart')
-    epoch_len = int(genesis_data.get('epochLength', 0))
+    cardano_start_str = genesis_data.get("systemStart")
+    epoch_len = int(genesis_data.get("epochLength", 0))
 
     if not cardano_start_str or not epoch_len:
-        print("Not able to find \"systemStart\" or \"epochLength\" in genesis data. Make sure you have passed correct genesis file.")
+        print(
+            'Not able to find "systemStart" or "epochLength" in genesis data. Make sure you have passed correct genesis file.'
+        )
         sys.exit(1)
 
     now = datetime.utcnow()
-    cardano_start_dt = datetime.strptime(cardano_start_str, '%Y-%m-%dT%H:%M:%SZ')
+    cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
     time_since_start = now - cardano_start_dt
     time_since_start_sec = time_since_start.total_seconds()
-    current_epoch = int(time_since_start_sec/epoch_len)
+    current_epoch = int(time_since_start_sec / epoch_len)
 
     next_epoch_in = epoch_len - (time_since_start_sec - current_epoch * epoch_len)
 
@@ -105,23 +111,25 @@ def calculate_epoch_date(epoch, genesis_data):
     returns:
     datetime object
     """
-    cardano_start_str = genesis_data.get('systemStart')
-    epoch_len = int(genesis_data.get('epochLength', 0))
+    cardano_start_str = genesis_data.get("systemStart")
+    epoch_len = int(genesis_data.get("epochLength", 0))
 
     if not cardano_start_str or not epoch_len:
-        print("Not able to find \"systemStart\" or \"epochLength\" in genesis data. Make sure you have passed correct genesis file.")
+        print(
+            'Not able to find "systemStart" or "epochLength" in genesis data. Make sure you have passed correct genesis file.'
+        )
         sys.exit(1)
 
-    cardano_start_dt = datetime.strptime(cardano_start_str, '%Y-%m-%dT%H:%M:%SZ')
+    cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
 
-    total_epoch_seconds =  epoch * epoch_len
+    total_epoch_seconds = epoch * epoch_len
 
     epoch_date = cardano_start_dt + timedelta(seconds=total_epoch_seconds)
 
     return epoch_date
 
 
-def kes_expiration_sec(remaining_kes_periods, genesis_data, network='--mainnet'):
+def kes_expiration_sec(remaining_kes_periods, genesis_data, network="--mainnet"):
     """Returns seconds until current KES keys expiration
 
     remaining_periods - int. returned by cardano-node metrics.
@@ -134,9 +142,9 @@ def kes_expiration_sec(remaining_kes_periods, genesis_data, network='--mainnet')
             'expiration_timestamp': kes_ekpiration_timestamp, int
         }
     """
-    current_slot  = get_current_tip(network=network)
-    slot_length   = genesis_data.get('slotLength')           # mainnet = 1
-    slots_per_kes = genesis_data.get('slotsPerKESPeriod')    # mainnet = 129600
+    current_slot = get_current_tip(network=network)
+    slot_length = genesis_data.get("slotLength")  # mainnet = 1
+    slots_per_kes = genesis_data.get("slotsPerKESPeriod")  # mainnet = 129600
 
     now_sec_since_epoch = int(time.time())
 
@@ -148,6 +156,6 @@ def kes_expiration_sec(remaining_kes_periods, genesis_data, network='--mainnet')
     # or datetime.utcnow+timedelta(seconds=(remaining_kes_seconds_total - seconds_current_period))
 
     return {
-        'seconds_remaining': remaining_seconds,
-        'expiration_timestamp': kes_ekpiration_timestamp
+        "seconds_remaining": remaining_seconds,
+        "expiration_timestamp": kes_ekpiration_timestamp,
     }

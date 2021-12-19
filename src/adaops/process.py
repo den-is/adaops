@@ -1,13 +1,13 @@
-import psutil
 import json
 from pathlib import Path
+
+import psutil
 
 CARDANO_NODE_ARGS = {}
 
 
-def check_cardano_node_proc(proc_name='cardano-node'):
-    ''' Checking if cardano-node process exists and extract command line arguments with values
-    '''
+def check_cardano_node_proc(proc_name="cardano-node"):
+    """Checking if cardano-node process exists and extract command line arguments with values"""
 
     for proc in psutil.process_iter():
         try:
@@ -15,10 +15,10 @@ def check_cardano_node_proc(proc_name='cardano-node'):
             if proc_name.lower() in proc.name().lower():
                 key_without_val = None
                 for i in proc.cmdline():
-                    if i.startswith('--'):
-                        key_without_val = i.lstrip('--')
-                        CARDANO_NODE_ARGS.setdefault(key_without_val, 'na')
-                    elif not i.startswith('--') and key_without_val:
+                    if i.startswith("--"):
+                        key_without_val = i.lstrip("--")
+                        CARDANO_NODE_ARGS.setdefault(key_without_val, "na")
+                    elif not i.startswith("--") and key_without_val:
                         CARDANO_NODE_ARGS[key_without_val] = i.strip()
 
                 # print(CARDANO_NODE_ARGS)
@@ -30,9 +30,8 @@ def check_cardano_node_proc(proc_name='cardano-node'):
     return None
 
 
-def get_node_config(file_path='', proc_name='cardano-node'):
-    """Looks for config file and returns JSON object.
-    """
+def get_node_config(file_path="", proc_name="cardano-node"):
+    """Looks for config file and returns JSON object."""
     config_file = ""
 
     if file_path:
@@ -44,12 +43,16 @@ def get_node_config(file_path='', proc_name='cardano-node'):
     else:
         process_args = check_cardano_node_proc(proc_name=proc_name)
         if process_args:
-            config_file = process_args.get('config', None)
+            config_file = process_args.get("config", None)
         else:
-            print(f'Was not able to find cardano-process and get cofniguration arguments from it. Process "{proc_name}"')
+            print(
+                f'Was not able to find cardano-process and get cofniguration arguments from it. Process "{proc_name}"'
+            )
 
     if not config_file:
-        print('Was not able to get config file. Provide config file path or provide correct process name')
+        print(
+            "Was not able to get config file. Provide config file path or provide correct process name"
+        )
         return None, None
 
     config_raw_path = Path(config_file)
@@ -60,13 +63,13 @@ def get_node_config(file_path='', proc_name='cardano-node'):
         return data, str(config_file_dir)
 
 
-def get_genesis_data(file_path='', phase='shelley', config_file_path='', proc_name='cardano-node'):
+def get_genesis_data(file_path="", phase="shelley", config_file_path="", proc_name="cardano-node"):
     """Returns genesis file data.
     Known issue: cardano-node config should include absolute paths to Genesis files.
     Function won't be able to load relative file paths.
     """
 
-    if phase.lower() not in ['alonzo', 'shelley', 'byron']:
+    if phase.lower() not in ["alonzo", "shelley", "byron"]:
         print(f'Unknow phase "{phase}"')
         return None
 
@@ -88,7 +91,7 @@ def get_genesis_data(file_path='', phase='shelley', config_file_path='', proc_na
             genesis_file = genesis_file_config
 
     if not genesis_file:
-        print('Was not able to get genesis file data')
+        print("Was not able to get genesis file data")
         return None
 
     with open(genesis_file) as f:
