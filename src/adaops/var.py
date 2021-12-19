@@ -299,15 +299,22 @@ def get_current_tip(item="slot", retries=3, network="--mainnet"):
         else:
             exec_success = True
 
-    output_dict = json.loads(decoded_output)
-    if item not in output_dict.keys():
-        items = ", ".join(output_dict.keys())
-        print(f'Item "{item}" is not available. Available list of items: {items}. Exiting.')
+    response_dict = json.loads(decoded_output)
+    response_keys = list(response_dict.keys())
+    response_keys.append("all")
+    if item not in response_keys:
+        items = ", ".join(response_keys)
+        logger.error(
+            'Item "%s" is not available. Available list of items: %s. Exiting.', item, items
+        )
         sys.exit(1)
 
-    current_tip_item = output_dict[item]
+    if item != "all":
+        current_tip_item = response_dict[item]
+    else:
+        current_tip_item = response_dict
 
-    return current_tip_item
+    return json.dumps(current_tip_item)
 
 
 def expected_slot(genesis_data, byron_genesis_data):
