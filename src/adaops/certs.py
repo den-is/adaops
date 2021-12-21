@@ -2,7 +2,7 @@ import logging
 import subprocess
 import sys
 
-from adaops import cmd_str_cleanup
+from adaops.var import cmd_str_cleanup
 
 logger = logging.getLogger(__name__)
 
