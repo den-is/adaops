@@ -64,26 +64,20 @@ def get_pool_stake_snapshot(pool_id, network="--mainnet"):
     process.wait()
     process_rc = process.returncode
     process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         logger.error(
             "Was not able to get blockchain stakes snapshot. "
             "Check that your host has enough memory."
         )
-        logger.error(decoded_output)
+        logger.error(process_stdout_bytes.decode("utf-8"))
         logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     try:
-        output = json.loads(decoded_output)
-    except JSONDecodeError:
-        logger.error("Was not able to decode Stakes Snapshot JSON", exc_info=1)
-        sys.exit(1)
-    except ValueError:
-        logger.error(
-            "Was not able to decode Stakes Snapshot JSON. Looks like it is not JSON.", exc_info=1
-        )
+        output = json.loads(process_stdout_bytes)
+    except (JSONDecodeError, ValueError):
+        logger.error("Was not able to read Stakes Snapshot JSON", exc_info=1)
         sys.exit(1)
 
     return output
@@ -107,23 +101,17 @@ def get_pool_params(pool_id, network="--mainnet"):
     process.wait()
     process_rc = process.returncode
     process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
         logger.error("Was not able to get pool params")
-        logger.error(decoded_output)
+        logger.error(process_stdout_bytes.decode("utf-8"))
         logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     try:
-        output = json.loads(decoded_output)
-    except JSONDecodeError:
+        output = json.loads(process_stdout_bytes)
+    except (JSONDecodeError, ValueError):
         logger.error("Was not able to decode Pool Params JSON", exc_info=1)
-        sys.exit(1)
-    except ValueError:
-        logger.error(
-            "Was not able to decode Pool Params JSON. Looks like it is not JSON.", exc_info=1
-        )
         sys.exit(1)
 
     return output
