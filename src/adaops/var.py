@@ -36,6 +36,14 @@ def check_file_exists(fpath):
         sys.exit(1)
 
 
+def cmd_str_cleanup(s):
+    """Remove excess whitespaces from command string"""
+
+    no_newl = s.replace("\n", "")
+    regex = re.compile(r"\s+", re.MULTILINE)
+    return regex.sub(" ", no_newl)
+
+
 def check_socket_env_var():
     """Checks if CARDANO_NODE_SOCKET_PATH env var is set.
 
@@ -44,11 +52,11 @@ def check_socket_env_var():
     """
 
     if not os.getenv("CARDANO_NODE_SOCKET_PATH"):
-        print("Not able to find CARDANO_NODE_SOCKET_PATH environment variable.")
-        print(
+        logger.error("Not able to find CARDANO_NODE_SOCKET_PATH environment variable")
+        logger.error(
             "Make sure that you are running on a node with active and fully synced cardano-node process."
         )
-        print(
+        logger.error(
             "If not satifies above statement make sure to at least set the CARDANO_NODE_SOCKET_PATH env variable."
         )
         sys.exit(1)
@@ -91,14 +99,8 @@ def get_protocol_params(network="--mainnet"):
         params = json.loads(process.stdout.read())
         return params
 
-    except JSONDecodeError as e:
-        print("Was not able to get/parse protocol parameters")
-        print(e)
-        sys.exit(1)
-
-    except ValueError as e:
-        print("Was not able to get/parse protocol parameters")
-        print(e)
+    except (JSONDecodeError, ValueError):
+        logger.error("Was not able to get/parse protocol parameters", exc_info=1)
         sys.exit(1)
 
 
@@ -156,17 +158,16 @@ def get_balances(address, user_utxo=None, network="--mainnet"):
     process_stdout_bytes = process.stdout.read()
 
     if process_rc != 0:
-        print(process_stdout_bytes.decode("utf-8"))
-        print("Not able to get address balances. Exiting.")
+        logger.error("Not able to get address balances")
+        logger.error(process_stdout_bytes.decode("utf-8"))
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error("Exiting")
         sys.exit(1)
 
     try:
         address_balances_json = json.loads(process_stdout_bytes)
-    except JSONDecodeError as e:
-        print(e)
-        sys.exit(1)
-    except ValueError as e:
-        print(e)
+    except (JSONDecodeError, ValueError):
+        logger.error("Not able to parse address balances JSON", exc_info=1)
         sys.exit(1)
 
     output = {}
@@ -177,14 +178,18 @@ def get_balances(address, user_utxo=None, network="--mainnet"):
             utxo for utxo in address_balances_json.keys() if utxo.startswith(user_utxo)
         ]
         if not filtered_utxos:
-            print(
-                f'Provided by user UTXO hash "{user_utxo}" does not exist under the given address "{address}"'
+            logger.error(
+                'Provided by user UTXO hash "%s" does not exist under the given address "%s"',
+                user_utxo,
+                address,
             )
         elif len(filtered_utxos) > 1:
-            print(
+            logger.warning(
                 "Balances query has returned more than 1 hashes. Probably different indexes of the same utxo."
             )
-            print("Specify exact hash with index. Available hashes:", "\n".join(filtered_utxos))
+            logger.warning(
+                "Specify exact hash with index. Available hashes:\n%s", "\n".join(filtered_utxos)
+            )
 
     for utxo in filtered_utxos:
         output[utxo] = {}
@@ -231,15 +236,14 @@ def get_stake_rewards(stake_addr, network="--mainnet"):
     process_stdout_bytes = process.stdout.read()
 
     if process_rc != 0:
-        print(process_stdout_bytes.decode("utf-8"))
-        print("Failed command was:", cmd)
+        logger.error(process_stdout_bytes.decode("utf-8"))
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     try:
         balances_json = json.loads(process_stdout_bytes)
-    except (ValueError, JSONDecodeError) as e:
-        print("Not able to get stake address rewards balance")
-        print(e)
+    except (ValueError, JSONDecodeError):
+        logger.error("Not able to parse stake address rewards balance JSON", exc_info=1)
         sys.exit(1)
 
     return balances_json
@@ -287,14 +291,14 @@ def get_current_tip(item="slot", retries=3, network="--mainnet"):
         decoded_output = process_stdout_bytes.decode("utf-8")
 
         if process_rc != 0:
-            print("Was not able to get the current tip")
+            logger.warning("Was not able to get the current tip")
             if decoded_output.startswith("MuxError"):
-                print("Got not fatal error:", decoded_output)
-                print("Going to retry after 3 seconds")
+                logger.warning("Got not fatal error: %s", decoded_output)
+                logger.warning("Going to retry after 3 seconds")
                 time.sleep(3)
                 continue
             else:
-                print("Fatal error was:", decoded_output)
+                logger.error("Fatal error was:", decoded_output)
                 sys.exit(1)
         else:
             exec_success = True
@@ -348,21 +352,21 @@ def get_metadata_hash(metadata_f, cwd=None):
         metadata_json = json.load(json_file)
 
     if not metadata_json:
-        print("Was not able to find pool metadata in file:", metadata_f)
+        logger.error("Was not able to find pool metadata in file: %s", metadata_f)
         sys.exit(1)
 
     ticker_re = re.compile(r"^([A-Z0-9]){3,5}$")
     re_check = ticker_re.search(metadata_json["ticker"])
     if not re_check:
-        print(
-            "Ticker does not match patter: 3-5 chars long, A-Z and 0-9 characters only",
+        logger.error(
+            "Ticker does not match patter: 3-5 chars long, A-Z and 0-9 characters only. Got %s",
             metadata_json["ticker"],
         )
         sys.exit(1)
 
     if len(metadata_json["description"]) > 255:
-        print(
-            "Pool description field value exceeds 255 characters. Chars:",
+        logger.error(
+            "Pool description field value exceeds 255 characters. Length: %d",
             len(metadata_json["description"]),
         )
         sys.exit(1)
@@ -382,8 +386,9 @@ def get_metadata_hash(metadata_f, cwd=None):
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Owner's Delegation cert creation didn't work")
-        print(decoded_output)
+        logger.error("Was not able to generate metadata hash")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     pool_metadata_hash = decoded_output.strip()
@@ -411,19 +416,11 @@ def download_meta(meta_url, dst_path):
         try:
             json.load(meta_f)
             valid_json_file = True
-        except ValueError as e:
-            print("Downloaded file is not a valid JSON file.", e)
+        except ValueError:
+            logger.error("Downloaded file is not a valid JSON file.", exc_info=1)
 
     if not valid_json_file:
-        print("Exiting")
+        logger.error("Got invalid JSON file. Exiting")
         sys.exit(1)
 
     return file_dst
-
-
-def cmd_str_cleanup(s):
-    """Remove excess whitespaces from command string"""
-
-    no_newl = s.replace("\n", "")
-    regex = re.compile(r"\s+", re.MULTILINE)
-    return regex.sub(" ", no_newl)
