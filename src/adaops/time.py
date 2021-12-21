@@ -25,10 +25,11 @@ def calculate_current_epoch(genesis_data):
     epoch_len = int(genesis_data.get("epochLength", 0))
 
     if not cardano_start_str or not epoch_len:
-        print(
+        logger.error(
             'Not able to find "systemStart" or "epochLength" in genesis data. '
             "Make sure you have passed correct genesis file."
         )
+
         sys.exit(1)
 
     now = datetime.utcnow()
@@ -61,7 +62,7 @@ def time_in_epoch(genesis_data):
     epoch_len = int(genesis_data.get("epochLength", 0))
 
     if not cardano_start_str or not epoch_len:
-        print(
+        logger.error(
             'Not able to find "systemStart" or "epochLength" in genesis data. '
             "Make sure you have passed correct genesis file."
         )
@@ -90,7 +91,7 @@ def time_until_next_epoch(genesis_data):
     epoch_len = int(genesis_data.get("epochLength", 0))
 
     if not cardano_start_str or not epoch_len:
-        print(
+        logger.error(
             'Not able to find "systemStart" or "epochLength" in genesis data. '
             "Make sure you have passed correct genesis file."
         )
@@ -121,7 +122,7 @@ def calculate_epoch_date(epoch, genesis_data):
     epoch_len = int(genesis_data.get("epochLength", 0))
 
     if not cardano_start_str or not epoch_len:
-        print(
+        logger.error(
             'Not able to find "systemStart" or "epochLength" in genesis data. '
             "Make sure you have passed correct genesis file."
         )
