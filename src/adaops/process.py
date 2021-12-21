@@ -28,7 +28,7 @@ def check_cardano_node_proc(proc_name="cardano-node"):
                 return CARDANO_NODE_ARGS
 
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            print(f'Was not able to find process "{proc_name}"')
+            logger.error("Was not able to find process: %s", proc_name)
 
     return None
 
@@ -41,18 +41,20 @@ def get_node_config(file_path="", proc_name="cardano-node"):
         if Path(file_path).exists():
             config_file = file_path
         else:
-            print(f'Provided config file does not exist: "{file_path}"')
+            logger.error("Provided config file does not exist: %s", file_path)
 
     else:
         process_args = check_cardano_node_proc(proc_name=proc_name)
         if process_args:
             config_file = process_args.get("config", None)
         else:
-            print("Was not able to find cardano-process and get configuration arguments from it.")
-            print(f"Process {proc_name}")
+            logger.error(
+                "Was not able to find cardano-process and get configuration arguments from it."
+            )
+            logger.error("Was looking for process: %s", proc_name)
 
     if not config_file:
-        print(
+        logger.error(
             "Was not able to get config file. Provide path to config file or correct process name"
         )
         return None, None
@@ -72,14 +74,14 @@ def get_genesis_data(file_path="", phase="shelley", config_file_path="", proc_na
     """
 
     if phase.lower() not in ["alonzo", "shelley", "byron"]:
-        print(f'Unknow phase "{phase}"')
+        logger.error("Unknown era provided: %s", phase)
         return None
 
     if file_path:
         if Path(file_path).exists():
             genesis_file = file_path
         else:
-            print(f'Provided genesis file does not exist: "{file_path}"')
+            logger.error("Provided genesis file does not exist: %s", file_path)
 
     else:
         config_data = get_node_config(file_path=config_file_path, proc_name=proc_name)[0]
@@ -93,7 +95,7 @@ def get_genesis_data(file_path="", phase="shelley", config_file_path="", proc_na
             genesis_file = genesis_file_config
 
     if not genesis_file:
-        print("Was not able to get genesis file data")
+        logger.error("Was not able to get genesis file data")
         return None
 
     with open(genesis_file) as f:
