@@ -419,3 +419,10 @@ def download_meta(meta_url, dst_path):
         sys.exit(1)
 
     return file_dst
+
+
+def cmd_str_cleanup(s):
+    """Remove excess spaces from command string"""
+
+    regex = re.compile(r"\s+", re.MULTILINE)
+    return regex.sub(" ", s)

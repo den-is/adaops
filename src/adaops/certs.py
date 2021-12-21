@@ -2,6 +2,8 @@ import logging
 import subprocess
 import sys
 
+from adaops import cmd_str_cleanup
+
 logger = logging.getLogger(__name__)
 
 
@@ -37,9 +39,9 @@ def generate_node_cert(
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Was not able to generate node cert")
-        print(decoded_output)
-        print("Failed command was:", cmd)
+        logger.error("Was not able to generate node cert")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return f"{cwd}/{output_name}"
@@ -68,9 +70,9 @@ def generate_stake_reg_cert(output_name="stake.cert", stake_vkey="stake.vkey", c
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Was not able to create stake registration cert")
-        print(decoded_output)
-        print("Failed command was:", cmd)
+        logger.error("Was not able to create stake registration cert")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return f"{cwd}/{output_name}"
@@ -100,9 +102,9 @@ def generate_delegation_cert(output_name, owner_stake_vkey, cold_vkey, cwd=None)
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Owner's Delegation cert creation didn't work")
-        print(decoded_output)
-        print("Failed command was:", cmd)
+        logger.error("Owner's Delegation cert creation didn't work")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return f"{cwd}/{output_name}"
@@ -144,10 +146,10 @@ def generate_pool_reg_cert(
         relays_dns_list = []
 
     if len(metadata_url) > 64:
-        print("Metadata URL is longer than 64 characters", metadata_url)
+        logger.error("Metadata URL is longer than 64 characters: %s", metadata_url)
 
     if not isinstance(owners_stake_vkeys_list, list):
-        print(
+        logger.error(
             "owners_stake_vkeys - list of strings with full path to owner stake verification keys"
         )
         sys.exit(1)
@@ -158,10 +160,9 @@ def generate_pool_reg_cert(
             for vkey_path in owners_stake_vkeys_list
         ]
     )
-    # print('owner_keys_in_cert', owners_stake_vkeys_args)
 
     if not relays_dns_list and not relays_ipv4_list:
-        print("Neither relays_dns_list or relays_ipv4_list supplied")
+        logger.error("Neither relays_dns_list or relays_ipv4_list supplied")
         sys.exit(1)
 
     pool_ipv4_relays = [
@@ -205,9 +206,9 @@ def generate_pool_reg_cert(
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print(decoded_output)
-        print("Pool registration certificate creation didn't work")
-        print("Failed command was:", cmd)
+        logger.error("Pool registration certificate creation didn't work")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return f"{cwd}/{output_fname}"
@@ -239,9 +240,9 @@ def generate_deregistration_cert(
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Was not able to create pool deregistration cert")
-        print(decoded_output)
-        print("Failed command was:", cmd)
+        logger.error("Was not able to create pool deregistration cert")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return f"{cwd}/{output_name}"
