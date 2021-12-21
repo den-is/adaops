@@ -211,40 +211,6 @@ def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", network="--mai
     return f"{cwd}/{output_fname}"
 
 
-def submit_tx(signed_tx_f="tx.signed", network="--mainnet", cwd=None):
-    """Submitting signed transaction to blockchain
-
-    requires CARDANO_NODE_SOCKET env variable
-    should run on online machine
-    """
-
-    check_socket_env_var()
-
-    cmd = f"cardano-cli transaction submit --tx-file {signed_tx_f} {network}"
-
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=cwd,
-    )
-
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
-        logger.error("Submiting TX did not work.")
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
-        sys.exit(1)
-
-    # TODO: add transaction ID to output
-    logger.info("Successfully submitted transaction")
-    return True
-
-
 def get_tx_id(tx_file=None, tx_body_file=None):
     """Return transaction ID using either TX body file, or signed/final TX file
 
@@ -282,6 +248,41 @@ def get_tx_id(tx_file=None, tx_body_file=None):
     tx_id = decoded_output.strip()
 
     return tx_id
+
+
+def submit_tx(signed_tx_f="tx.signed", network="--mainnet", cwd=None):
+    """Submitting signed transaction to blockchain
+
+    requires CARDANO_NODE_SOCKET env variable
+    should run on online machine
+    """
+
+    check_socket_env_var()
+
+    cmd = f"cardano-cli transaction submit --tx-file {signed_tx_f} {network}"
+
+    process = subprocess.Popen(
+        ["sh", "-c", cmd],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=cwd,
+    )
+
+    process.wait()
+    process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
+
+    if process_rc != 0:
+        logger.error("Submiting TX did not work.")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        sys.exit(1)
+
+    tx_id = get_tx_id(signed_tx_f)
+    logger.info("Successfully submitted transaction %s", tx_id)
+
+    return True
 
 
 def wait_for_tx(address, tx_id, timeout=60, network="--mainnet"):
