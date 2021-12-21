@@ -3,7 +3,7 @@ import subprocess
 import sys
 import time
 
-from adaops.var import check_file_exists, check_socket_env_var, get_balances, l2a
+from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup, get_balances, l2a
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,8 @@ def build_tx(
         if len(certs) > 0:
             certs_args = " ".join(["--certificate-file {}".format(cert) for cert in certs])
     else:
-        print('"certs" argument should be a list. Received:', certs)
+        logger.error('"certs" argument should be a list. Received: %s', certs)
+        logger.error("Exiting")
         sys.exit(1)
 
     withdrawal_args = ""
@@ -70,10 +71,14 @@ def build_tx(
         check_file_exists(minting_script_file)
         minting_args = f'--mint="{mint}" --minting-script-file {minting_script_file}'
     elif mint and not minting_script_file:
-        print('Got "mint" string, but minting-script-file is missing. Both are required. Exiting.')
+        logger.error(
+            'Got "mint" string, but minting-script-file is missing. Both are required. Exiting.'
+        )
         sys.exit(1)
     elif minting_script_file and not mint:
-        print('Got "minting_script_file", but not a "mint"string . Both are required. Exiting.')
+        logger.error(
+            'Got "minting_script_file", but not a "mint"string . Both are required. Exiting.'
+        )
         sys.exit(1)
 
     cmd = f"""cardano-cli transaction build-raw \
@@ -92,15 +97,16 @@ def build_tx(
 
     process.wait()
     process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
 
     if process_rc != 0:
-        print(process_stdout_bytes.decode("utf-8"))
+        process_stdout_bytes = process.stdout.read()
+        decoded_output = process_stdout_bytes.decode("utf-8")
         if draft:
-            print("Was not able to build Transaction Draft")
+            logger.error("Was not able to build Transaction Draft")
         else:
-            print("Was not able to build Raw Transaction")
-        print("Failed command was:", cmd)
+            logger.error("Was not able to build Raw Transaction")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return f"{cwd}/{output_fname}"
@@ -152,9 +158,9 @@ def get_tx_fee(
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Was not able to calculate fees")
-        print(decoded_output)
-        print("Failed command was:", cmd)
+        logger.error("Was not able to calculate fees")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     tx_fee_lovelace = int(decoded_output.split(" ")[0])
@@ -197,9 +203,9 @@ def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", network="--mai
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print(decoded_output)
-        print("Signing TX did not work.")
-        print("Failed command was:", cmd)
+        logger.error("Signing TX did not work.")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return f"{cwd}/{output_fname}"
@@ -229,13 +235,13 @@ def submit_tx(signed_tx_f="tx.signed", network="--mainnet", cwd=None):
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Submiting TX did not work.")
-        print("Failed command was:", cmd)
-        print(decoded_output)
+        logger.error("Submiting TX did not work.")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
-    print(decoded_output.rstrip())
-
+    # TODO: add transaction ID to output
+    logger.info("Successfully submitted transaction")
     return True
 
 
@@ -248,7 +254,7 @@ def get_tx_id(tx_file=None, tx_body_file=None):
     """
 
     if not tx_file and not tx_body_file:
-        print("Either 'tx_file' or 'tx_body_file' should be provided. None provided")
+        logger.error("Either 'tx_file' or 'tx_body_file' should be provided. None provided")
         sys.exit(1)
 
     if tx_body_file and not tx_file:
@@ -268,9 +274,9 @@ def get_tx_id(tx_file=None, tx_body_file=None):
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Was not able to get transaction ID")
-        print("Failed command was:", cmd)
-        print(decoded_output.strip())
+        logger.error("Was not able to get transaction ID")
+        logger.error(decoded_output.strip())
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     tx_id = decoded_output.strip()
@@ -298,14 +304,14 @@ def wait_for_tx(address, tx_id, timeout=60, network="--mainnet"):
                 end_time = round(time.time() - start_time, 1)
                 tx_arrived = True
                 lovelace = utxos[utxo]["lovelace"]
-                print(
-                    f"Transaction {tx_id} arrived in {end_time} seconds",
-                    "\nBalance {} A ({} L)".format(l2a(lovelace), lovelace),
-                )
+                logger.info("Transaction %s arrived in %d seconds", tx_id, end_time)
+                logger.info("Balance: %d A (%d L)", l2a(lovelace), lovelace)
                 return
 
         elapsed_time = round(time.time() - start_time, 1)
         time.sleep(1)
 
     if not tx_arrived and elapsed_time >= 0:
-        print(f"Transaction {tx_id} did not arrive after more than {elapsed_time} seconds.")
+        logger.warning(
+            "Transaction %s did not arrive after more than %d seconds.", tx_id, elapsed_time
+        )
