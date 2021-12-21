@@ -422,7 +422,8 @@ def download_meta(meta_url, dst_path):
 
 
 def cmd_str_cleanup(s):
-    """Remove excess spaces from command string"""
+    """Remove excess whitespaces from command string"""
 
+    no_newl = s.replace("\n", "")
     regex = re.compile(r"\s+", re.MULTILINE)
-    return regex.sub(" ", s)
+    return regex.sub(" ", no_newl)
