@@ -2,6 +2,8 @@ import logging
 import subprocess
 import sys
 
+from adaops import cmd_str_cleanup
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,14 +29,16 @@ def generate_node_cold_keys(name_prefix="cold", cwd=None):
         stderr=subprocess.STDOUT,
         cwd=cwd,
     )
+
     process.wait()
     process_rc = process.returncode
-
-    proc_stdout_bytes = process.stdout.read()
-    print(proc_stdout_bytes.decode("utf-8"))
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Was not able to generate node's Cold key pair")
+        logger.error("Was not able to generate node's Cold key pair")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return (
@@ -65,14 +69,16 @@ def generate_node_vrf_keys(name_prefix="vrf", cwd=None):
         stderr=subprocess.STDOUT,
         cwd=cwd,
     )
+
     process.wait()
     process_rc = process.returncode
-
-    proc_stdout_bytes = process.stdout.read()
-    print(proc_stdout_bytes.decode("utf-8"))
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Was not able to generate node's VRF key pair")
+        logger.error("Was not able to generate node's VRF key pair")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return (f"{cwd}/{name_prefix}.vkey", f"{cwd}/{name_prefix}.skey")
@@ -101,14 +107,16 @@ def generate_node_kes_keys(name_prefix="kes", cwd=None):
         stderr=subprocess.STDOUT,
         cwd=cwd,
     )
+
     process.wait()
     process_rc = process.returncode
-
-    proc_stdout_bytes = process.stdout.read()
-    print(proc_stdout_bytes.decode("utf-8"))
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        print("Was not able to generate node's KES key pair")
+        logger.error("Was not able to generate node's KES key pair")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
 
     return (f"{cwd}/{name_prefix}.vkey", f"{cwd}/{name_prefix}.skey")
