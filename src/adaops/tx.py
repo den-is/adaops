@@ -306,7 +306,7 @@ def wait_for_tx(address, tx_id, timeout=60, network="--mainnet"):
                 tx_arrived = True
                 lovelace = utxos[utxo]["lovelace"]
                 logger.info("Transaction %s arrived in %d seconds", tx_id, end_time)
-                logger.info("Balance: %d A (%d L)", l2a(lovelace), lovelace)
+                logger.info("Balance: %f A (%d L)", l2a(lovelace), lovelace)
                 return
 
         elapsed_time = round(time.time() - start_time, 1)
