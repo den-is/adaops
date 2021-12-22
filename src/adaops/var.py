@@ -45,21 +45,24 @@ def cmd_str_cleanup(s):
 
 
 def check_socket_env_var():
-    """Checks if CARDANO_NODE_SOCKET_PATH env var is set.
+    """Checks if CARDANO_NODE_SOCKET_PATH env var is set and indicated file exists.
 
     Required for running "online" commands that will query the network.
     For example to query address balance or network tip.
     """
 
-    if not os.getenv("CARDANO_NODE_SOCKET_PATH"):
-        logger.error("Not able to find CARDANO_NODE_SOCKET_PATH environment variable")
+    socket_path_val = os.getenv("CARDANO_NODE_SOCKET_PATH")
+    if not socket_path_val:
+        logger.error("CARDANO_NODE_SOCKET_PATH is absent or has no value assigned")
         logger.error(
-            "Make sure that you are running on a node with active and fully synced cardano-node process."
-        )
-        logger.error(
-            "If not satifies above statement make sure to at least set the CARDANO_NODE_SOCKET_PATH env variable."
+            "Make sure that you are running on a machine with an active and fully synced cardano-node process"
         )
         sys.exit(1)
+
+    if socket_path_val:
+        if not Path(socket_path_val).exists():
+            logger.error("CARDANO_NODE_SOCKET_PATH is set, but file does not exist: %s", socket_path_val)
+            sys.exit(1)
 
     return True
 
