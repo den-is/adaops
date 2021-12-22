@@ -264,10 +264,11 @@ def current_kes_period(current_slot, genesis_data):
     return math.floor(current_slot / slots_per_period)
 
 
-def get_current_tip(item="slot", retries=3, network="--mainnet"):
+def get_current_tip(item="slot", retries=3, return_json=False, network="--mainnet"):
     """Get current tip's slot of the blockchain
     By default return current slot.
     Possible options: 'slot', 'epoch', 'syncProgress', 'block', 'hash', 'era'
+    return_json - return JSON string. default False
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH env var required
@@ -321,7 +322,10 @@ def get_current_tip(item="slot", retries=3, network="--mainnet"):
     else:
         current_tip_item = response_dict
 
-    return json.dumps(current_tip_item)
+    if return_json:
+        return json.dumps(current_tip_item)
+
+    return current_tip_item
 
 
 def expected_slot(genesis_data, byron_genesis_data):
