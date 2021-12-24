@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+from binascii import hexlify, unhexlify
 from json import JSONDecodeError
 from pathlib import Path
 
@@ -125,6 +126,16 @@ def a2l(ada):
     """
     if isinstance(ada, (float, int)):
         return int(ada * 1000000)
+
+
+def a2h(ascii_s):
+    """Converts ASCII string into hex representation string"""
+    return hexlify(ascii_s.encode()).decode()
+
+
+def h2a(hex_s):
+    """Converts hex string into ASCII representation string"""
+    return unhexlify(hex_s).decode()
 
 
 def get_balances(address, user_utxo=None, network="--mainnet"):
