@@ -168,6 +168,46 @@ def get_tx_fee(
     return tx_fee_lovelace
 
 
+def min_utxo(
+    tx_out,
+    protocol_fpath
+):
+    """Calculates minimum required UTXO amount in tx_out to send with assets
+
+    Since Alonzo era.
+    Returns int Lovelaces.
+    """
+
+    _protocol_fpath = check_file_exists(protocol_fpath)
+
+    cmd = f"""cardano-cli transaction calculate-min-required-utxo \
+        --alonzo-era \
+        --protocol-params-file {_protocol_fpath} \
+        --tx-out {tx_out}
+        """
+
+    process = subprocess.Popen(
+        ["sh", "-c", cmd],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+
+    process.wait()
+    process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
+
+    if process_rc != 0:
+        logger.error("Was not able to calculate minimum required UTXO amount for assets transaction")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        sys.exit(1)
+
+    tx_fee_lovelace = int(decoded_output.split(" ")[1])
+
+    return tx_fee_lovelace
+
+
 def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", network="--mainnet", cwd=None):
     """Witnesses are the number of keys that will be signing the transaction.
 
