@@ -1,4 +1,6 @@
+import json
 import logging
+import math
 import subprocess
 import sys
 import time
@@ -209,6 +211,106 @@ def min_utxo(tx_out, protocol_fpath):
     tx_fee_lovelace = int(decoded_output.split(" ")[1])
 
     return tx_fee_lovelace
+
+
+def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
+    """Calculate minimum required UTXO for assets transfer using manual/scientific method provided in Cardano papers.
+    Method added as a historical record and reference for checking calculations.
+
+    Sources:
+    https://docs.cardano.org/native-tokens/minimum-ada-value-requirement
+    https://github.com/input-output-hk/cardano-ledger/blob/cde55e2ea56e601b93efdfbe37a9e840cef3b37c/doc/explanations/min-utxo-alonzo.rst
+    """
+
+    _protocol_fpath = check_file_exists(protocol_fpath)
+
+    protocol_params = {}
+    with open(_protocol_fpath, "r") as params_json_f:
+        protocol_params = json.load(params_json_f)
+
+    #chain constants, based on the specifications: https://hydra.iohk.io/build/5949624/download/1/shelley-ma.pdf
+    k0=0                        #coinSize=0 in mary-era, 2 in alonzo-era
+    if era == "alonzo":
+        k0=2
+
+    k1=6
+    k2=12                       # assetSize=12
+    k3=28                       # pidSize=28
+    k4=8                        # word=8 bytes
+    utxoEntrySizeWithoutVal=27  # 6+txOutLenNoVal(14)+txInLen(7)
+    adaOnlyUTxOSize=utxoEntrySizeWithoutVal + k0
+
+    minUTXOValue = protocol_params.get("minUTxOValue")
+    utxoCostPerWord = protocol_params.get("utxoCostPerWord")
+    if era == "alonzo":
+        # at the moment of writing (20211206) returns: 999978
+        minUTXOValue = utxoCostPerWord * adaOnlyUTxOSize
+
+    #preload it with the minUTXOValue (1ADA), will be overwritten if costs are higher
+    # minOutUTXO - should 1ADA - 1,000,000Lovelace
+    result = minUTXOValue
+
+    parts = tx_out.split('+') # [ addr, bal, asset[s...] ]
+
+    print(parts)
+
+    if len(parts) > 2:
+
+        idx = 2 # skip, addr and bal, start with assets
+        pidCollector    = []    #holds the list of individual policyIDs
+        assetsCollector = []    #holds the list of individual assetHases (policyID+assetName)
+        nameCollector   = []    #holds the list of individual assetNames(hex format)
+
+        # iterate over assets attached to UTXO
+        while len(parts) > idx:
+
+            #separate assetamount from asset_hash(policyID.assetName)
+            complete_asset_info = list(filter(None, parts[idx].replace('"', "").split(' ')))
+            asset_hash = complete_asset_info[1]
+
+            # split asset_hash_name into policyID and assetName(hex)
+            # later when we change the tx-out format to full hex format
+            # this can be simplified into a stringsplit
+            asset_hash_data_lst = asset_hash.split('.')
+            asset_hash_policy = asset_hash_data_lst[0]
+
+            asset_hash_hexname = asset_hash_data_lst[1]
+
+            # if asset name is in ASCII format
+            if not hex_name:
+                asset_hash_hexname = asset_hash_data_lst[1].encode('utf-8').hex()
+
+            # Testing conversion in bash:
+            # echo -n $1 | xxd -b -ps -c 80 | tr -d '\n'
+            # input: b3c95a579b99059f521f8a1a78a75b94
+            # correct result: 6233633935613537396239393035396635323166386131613738613735623934
+            # wrong result: 2d6e2062336339356135373962393930353966353231663861316137386137356239340a
+
+            pidCollector.append(asset_hash_policy)
+            assetsCollector.append(f"{asset_hash_policy}{asset_hash_hexname}")
+            if asset_hash_hexname:
+                nameCollector.append(asset_hash_hexname)
+
+            idx += 1
+
+    # get uniq entries
+    numPIDs = len(set(pidCollector))
+    numAssets = len(set(assetsCollector))
+
+    # get sumAssetNameLengths
+    # divide consolidated hexstringlength by 2 because 2 hex chars -> 1 byte
+    sumAssetNameLengths = int(len(  ''.join(set(nameCollector)).strip()  )/2)
+
+
+    roundupBytesToWords = math.floor((numAssets*k2 + sumAssetNameLengths + numPIDs*k3 + (k4-1))/k4)
+    tokenBundleSize = k1 + roundupBytesToWords
+
+    minAda = math.floor(minUTXOValue / adaOnlyUTxOSize) * (utxoEntrySizeWithoutVal + tokenBundleSize)
+
+    if minAda > result:
+        result = minAda
+
+    return result
 
 
 def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", network="--mainnet", cwd=None):
