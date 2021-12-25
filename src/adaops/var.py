@@ -135,6 +135,10 @@ def a2h(ascii_s):
 
 def h2a(hex_s):
     """Converts hex string into ASCII representation string"""
+
+    if len(hex_s) % 2 != 0:
+        logger.warning('Hex string "%s" might be broken, as it contains odd number of characters %d', hex_s, len(hex_s))
+
     return unhexlify(hex_s).decode()
 
 

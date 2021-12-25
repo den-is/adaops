@@ -301,7 +301,6 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
     # divide consolidated hexstringlength by 2 because 2 hex chars -> 1 byte
     sumAssetNameLengths = int(len(  ''.join(set(nameCollector)).strip()  )/2)
 
-
     roundupBytesToWords = math.floor((numAssets*k2 + sumAssetNameLengths + numPIDs*k3 + (k4-1))/k4)
     tokenBundleSize = k1 + roundupBytesToWords
 
