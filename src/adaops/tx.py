@@ -168,14 +168,17 @@ def get_tx_fee(
     return tx_fee_lovelace
 
 
-def min_utxo(
-    tx_out,
-    protocol_fpath
-):
+def min_utxo(tx_out, protocol_fpath):
     """Calculates minimum required UTXO amount in tx_out to send with assets
-
     Since Alonzo era.
     Returns int Lovelaces.
+
+    tx_out - actual real tx_out string
+        single asset: receiver_addr+receiver_ada+"1 policyid.tokenname"
+        multi asset: receiver_addr+receiver_ada+"1 policyid.tokenname1 + 1 policyid.tokenname2"
+        receiver_addr and receiver_ada ara not important and can be some draft values
+
+    protocol_fpath - path to protocol parameters JSON file
     """
 
     _protocol_fpath = check_file_exists(protocol_fpath)
