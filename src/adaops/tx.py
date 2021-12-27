@@ -43,16 +43,13 @@ def build_tx(
                     "tx.raw" for the actual transaction.
     """
 
+    tx_in_args = " ".join(["--tx-in {}".format(utxo) for utxo in tx_in_list])
+
+    tx_out_args = " ".join(["--tx-out {}".format(tx_out_dst) for tx_out_dst in tx_out_list])
+
     if certs is None:
-        certs = []
-
-    certs_args = ""
-
-    tx_in_args = " ".join(["--tx-in {}".format(inhash) for inhash in tx_in_list])
-
-    tx_out_args = " ".join(["--tx-out {}".format(outaddr) for outaddr in tx_out_list])
-
-    if isinstance(certs, list):
+        certs_args = ""
+    elif isinstance(certs, list):
         if len(certs) > 0:
             certs_args = " ".join(["--certificate-file {}".format(cert) for cert in certs])
     else:
