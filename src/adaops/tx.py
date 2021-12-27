@@ -15,8 +15,7 @@ def build_tx(
     tx_out_list,
     fee=0,
     invalid_hereafter=None,
-    withdrawal=False,
-    stake_addr="",
+    withdrawal=None,
     certs=None,
     mint=None,
     minting_script_file=None,
@@ -36,6 +35,7 @@ def build_tx(
     tx_in_list  - list of input transaction hashes with index. list of strings.
                   string format: "tx_hash#tx_idx"
     tx_out_list - list of output/destination addresses. string format: "address+amount"
+    withdrawal  - string. if provided should be in form "stake_addr+withdrawal_amount"
     certs - certificates to include and register on blockchain.
             should be list of strings representing full path to certificates.
     output_fname - convention used in many examples:
@@ -58,8 +58,8 @@ def build_tx(
         sys.exit(1)
 
     withdrawal_args = ""
-    if withdrawal and stake_addr:
-        withdrawal_args = f"--withdrawal {stake_addr}"
+    if withdrawal:
+        withdrawal_args = f"--withdrawal {withdrawal}"
 
     invalid_hereafter_args = ""
     if invalid_hereafter is not None:
