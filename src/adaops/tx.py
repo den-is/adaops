@@ -15,12 +15,15 @@ def build_tx(
     tx_out_list,
     fee=0,
     invalid_hereafter=None,
+    invalid_before=None,
     withdrawal=None,
     certs=None,
     mint=None,
     minting_script_file=None,
     metadata_file=None,
     output_fname="tx.draft",
+    era_arg="--alonzo-era",
+    extra_args=None,
     draft=True,
     cwd=None,
 ):
@@ -44,6 +47,13 @@ def build_tx(
                     "tx.raw" for the actual transaction.
     """
 
+    eras_args = ["--byron-era", "--shelley-era", "--allegra-era", "--mary-era", "--alonzo-era"]
+
+    if era_arg not in eras_args:
+        logger.error('Selected era %s argument is not in the list of available era arguments: %s', era_arg, eras_args)
+        logger.error("Exiting")
+        sys.exit(1)
+
     tx_in_args = " ".join(["--tx-in {}".format(utxo) for utxo in tx_in_list])
 
     tx_out_args = " ".join(["--tx-out {}".format(tx_out_dst) for tx_out_dst in tx_out_list])
@@ -65,6 +75,14 @@ def build_tx(
     invalid_hereafter_args = ""
     if invalid_hereafter is not None:
         invalid_hereafter_args = f"--invalid-hereafter {invalid_hereafter}"
+
+    invalid_before_arg = ""
+    if invalid_before is not None:
+        invalid_before_arg = f"--invalid-before {invalid_before}"
+
+    _extra_args=""
+    if extra_args:
+        _extra_args = extra_args
 
     minting_args = ""
     if mint and minting_script_file:
@@ -89,10 +107,10 @@ def build_tx(
 
     cmd = f"""cardano-cli transaction build-raw \
         {tx_in_args} \
-        {tx_out_args} {invalid_hereafter_args} \
+        {tx_out_args} {invalid_hereafter_args} {invalid_before_arg} \
         --fee {fee} \
         --out-file {output_fname} \
-        {certs_args} {withdrawal_args} {minting_args} {metadata_json_file}"""
+        {certs_args} {withdrawal_args} {minting_args} {metadata_json_file} {_extra_args}"""
 
     process = subprocess.Popen(
         ["sh", "-c", cmd],
