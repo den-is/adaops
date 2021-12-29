@@ -1,3 +1,111 @@
+import logging
+import subprocess
+import sys
+
+from adaops.var import cmd_str_cleanup, check_file_exists
+
+logger = logging.getLogger(__name__)
+
+
+def generate_addr_keys(fname="policy", cwd=None):
+    """Generates crypto keys pair in cwd and return vkey hash"""
+
+    cmd = [
+        "sh",
+        "-c",
+        f"cardano-cli address key-gen --verification-key-file {fname}.vkey --signing-key-file {fname}.skey",
+    ]
+
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=cwd,
+    )
+
+    process.wait()
+    process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
+
+    if process_rc != 0:
+        logger.error("Was not able to generate policy crypto pair")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        sys.exit(1)
+
+    return {
+        "skey": f"{cwd}/{fname}.skey",
+        "vkey": f"{cwd}/{fname}.vkey",
+    }
+
+
+def get_key_hash(key_path, cwd=None):
+
+    _key_file = check_file_exists(key_path)
+
+    hash_cmd = [ "sh", "-c", f"cardano-cli address key-hash --payment-verification-key-file {_key_file}"]
+
+    process = subprocess.Popen(
+        hash_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=cwd,
+    )
+
+    process.wait()
+    process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    process_output = process_stdout_bytes.decode("utf-8")
+
+    if process_rc != 0:
+        logger.error("Was not able to get {key_path} key hash")
+        logger.error(process_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(hash_cmd))
+        sys.exit(1)
+
+    key_hash = process_output.strip()
+    return key_hash
+
+
+def get_policy_id(policy_file, cwd=None):
+    """Get policy ID
+
+    policy_file - full path to a policy script file. relative to cwd or full path
+    cwd         - directory where cardano-cli will be executed
+    """
+
+    _policy_file = check_file_exists(policy_file)
+
+    cmd = [
+        "sh",
+        "-c",
+        f"cardano-cli transaction policyid --script-file {_policy_file}",
+    ]
+
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=cwd,
+    )
+
+    process.wait()
+    process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
+
+    if process_rc != 0:
+        logger.error("Was not able to generate policy crypto pair")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        sys.exit(1)
+
+    policy_id = decoded_output.strip()
+
+    return policy_id
+
+
 def find_asset_utxo(utxos_json, asset_name, policy_id=None):
     """Return tuple of UTXO(s) that hold request asset_name
 
