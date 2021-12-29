@@ -22,7 +22,7 @@ def build_tx(
     minting_script_file=None,
     metadata_file=None,
     output_fname="tx.draft",
-    era_arg="--alonzo-era",
+    era_arg=None,
     extra_args=None,
     draft=True,
     cwd=None,
@@ -47,12 +47,14 @@ def build_tx(
                     "tx.raw" for the actual transaction.
     """
 
-    eras_args = ["--byron-era", "--shelley-era", "--allegra-era", "--mary-era", "--alonzo-era"]
+    eras_args = ["", None, "--byron-era", "--shelley-era", "--allegra-era", "--mary-era", "--alonzo-era"]
 
     if era_arg not in eras_args:
         logger.error('Selected era %s argument is not in the list of available era arguments: %s', era_arg, eras_args)
         logger.error("Exiting")
         sys.exit(1)
+    elif not era_arg:
+        era_arg = ""
 
     tx_in_args = " ".join(["--tx-in {}".format(utxo) for utxo in tx_in_list])
 
@@ -105,7 +107,7 @@ def build_tx(
         check_file_exists(metadata_file)
         metadata_json_file = f"--metadata-json-file {metadata_file}"
 
-    cmd = f"""cardano-cli transaction build-raw \
+    cmd = f"""cardano-cli transaction build-raw {era_arg} \
         {tx_in_args} \
         {tx_out_args} {invalid_hereafter_args} {invalid_before_arg} \
         --fee {fee} \
