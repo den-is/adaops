@@ -19,6 +19,7 @@ def build_tx(
     certs=None,
     mint=None,
     minting_script_file=None,
+    metadata_file=None,
     output_fname="tx.draft",
     draft=True,
     cwd=None,
@@ -80,12 +81,18 @@ def build_tx(
         )
         sys.exit(1)
 
+    metadata_json_file = ""
+    if metadata_file:
+        logger.info('Got --metadata-json-file. Going to check if it exists.')
+        check_file_exists(metadata_file)
+        metadata_json_file = f"--metadata-json-file {metadata_file}"
+
     cmd = f"""cardano-cli transaction build-raw \
         {tx_in_args} \
         {tx_out_args} {invalid_hereafter_args} \
         --fee {fee} \
         --out-file {output_fname} \
-        {certs_args} {withdrawal_args} {minting_args}"""
+        {certs_args} {withdrawal_args} {minting_args} {metadata_json_file}"""
 
     process = subprocess.Popen(
         ["sh", "-c", cmd],
