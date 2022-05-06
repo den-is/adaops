@@ -4,6 +4,7 @@ import math
 import subprocess
 import sys
 import time
+from timeit import default_timer as timer
 
 from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup, get_balances, l2a
 
@@ -458,29 +459,34 @@ def wait_for_tx(address, tx_id, timeout=60, network="--mainnet"):
 
     One of the inputs is required. In case if both are supplied 'tx_file' will take precedence.
     """
-    start_time = time.time()
-    elapsed_time = 0
+    start = timer()
+    end = 0
 
     tx_arrived = False
+    timeouted = False
 
-    while not tx_arrived and elapsed_time < timeout:
+    while not tx_arrived:
+
+        if (end - start) >= timeout:
+            timeouted = True
+            break
 
         utxos = get_balances(address=address, network=network)
 
         for utxo in utxos.keys():
             utxo_hash = utxo.split("#")[0]
             if utxo_hash == tx_id:
-                end_time = round(time.time() - start_time, 1)
+                end_time = int(round(end - start, 0))
                 tx_arrived = True
-                lovelace = utxos[utxo]["lovelace"]
-                logger.info("Transaction %s arrived in %d seconds", tx_id, end_time)
-                logger.info("Balance: %f A (%d L)", l2a(lovelace), lovelace)
+                logger.info("TX %s appeared in %d sec", tx_id, end_time)
                 return
 
-        elapsed_time = round(time.time() - start_time, 1)
         time.sleep(1)
+        end = timer()
 
-    if not tx_arrived and elapsed_time >= 0:
+    elapsed_time = int(round(end - start, 0))
+
+    if timeouted:
         logger.warning(
-            "Transaction %s did not arrive after more than %d seconds.", tx_id, elapsed_time
+            "TX %s timeouted after %d seconds", tx_id, elapsed_time
         )
