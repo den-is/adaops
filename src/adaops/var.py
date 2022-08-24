@@ -1,3 +1,4 @@
+import decimal
 import json
 import logging
 import math
@@ -62,7 +63,9 @@ def check_socket_env_var():
 
     if socket_path_val:
         if not Path(socket_path_val).exists():
-            logger.error("CARDANO_NODE_SOCKET_PATH is set, but file does not exist: %s", socket_path_val)
+            logger.error(
+                "CARDANO_NODE_SOCKET_PATH is set, but file does not exist: %s", socket_path_val
+            )
             sys.exit(1)
 
     return True
@@ -114,7 +117,7 @@ def l2a(lovelace):
     Accepts Integer values only.
     Returns Float value
     """
-    if isinstance(lovelace, int):
+    if isinstance(lovelace, (int, float, decimal.Decimal)):
         return float(lovelace / 1000000)
 
 
@@ -124,7 +127,7 @@ def a2l(ada):
     Accepts Integer and Float values only.
     Returns Integer value.
     """
-    if isinstance(ada, (float, int)):
+    if isinstance(ada, (float, int, decimal.Decimal)):
         return int(ada * 1000000)
 
 
@@ -137,7 +140,11 @@ def h2a(hex_s):
     """Converts hex string into ASCII representation string"""
 
     if len(hex_s) % 2 != 0:
-        logger.warning('Hex string "%s" might be broken, as it contains odd number of characters %d', hex_s, len(hex_s))
+        logger.warning(
+            'Hex string "%s" might be broken, as it contains odd number of characters %d',
+            hex_s,
+            len(hex_s),
+        )
 
     return unhexlify(hex_s).decode()
 
