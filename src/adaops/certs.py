@@ -217,7 +217,7 @@ def generate_pool_reg_cert(
 def generate_deregistration_cert(
     cold_vkey, epoch, output_name="pool-deregistration.cert", cwd=None
 ):
-    """Generates deregistration certificate required for pool retirement
+    """Generates a pool deregistration certificate required for the pool retirement
 
     Runs on an air-gapped offline machine
     """
@@ -241,6 +241,41 @@ def generate_deregistration_cert(
 
     if process_rc != 0:
         logger.error("Was not able to create pool deregistration cert")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        sys.exit(1)
+
+    return f"{cwd}/{output_name}"
+
+
+def generate_stake_dereg_cert(
+    stake_vkey,
+    output_name="stake-deregistration.cert",
+    cwd=None,
+):
+    """Generates a stake delegation deregistration certificate
+
+    Runs on an air-gapped offline machine
+    """
+
+    cmd = f"""cardano-cli stake-address deregistration-certificate \
+        --stake-verification-key-file {stake_vkey} \
+        --out-file {output_name}"""
+
+    process = subprocess.Popen(
+        ["sh", "-c", cmd],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=cwd,
+    )
+
+    process.wait()
+    process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
+
+    if process_rc != 0:
+        logger.error("Was not able to create stake address deregistration cert")
         logger.error(decoded_output)
         logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
