@@ -48,10 +48,22 @@ def build_tx(
                     "tx.raw" for the actual transaction.
     """
 
-    eras_args = ["", None, "--byron-era", "--shelley-era", "--allegra-era", "--mary-era", "--alonzo-era"]
+    eras_args = [
+        "",
+        None,
+        "--byron-era",
+        "--shelley-era",
+        "--allegra-era",
+        "--mary-era",
+        "--alonzo-era",
+    ]
 
     if era_arg not in eras_args:
-        logger.error('Selected era %s argument is not in the list of available era arguments: %s', era_arg, eras_args)
+        logger.error(
+            "Selected era %s argument is not in the list of available era arguments: %s",
+            era_arg,
+            eras_args,
+        )
         logger.error("Exiting")
         sys.exit(1)
     elif not era_arg:
@@ -83,7 +95,7 @@ def build_tx(
     if invalid_before is not None:
         invalid_before_arg = f"--invalid-before {invalid_before}"
 
-    _extra_args=""
+    _extra_args = ""
     if extra_args:
         _extra_args = extra_args
 
@@ -104,7 +116,7 @@ def build_tx(
 
     metadata_json_file = ""
     if metadata_file:
-        logger.info('Got --metadata-json-file. Going to check if it exists.')
+        logger.info("Got --metadata-json-file. Going to check if it exists.")
         check_file_exists(metadata_file)
         metadata_json_file = f"--metadata-json-file {metadata_file}"
 
@@ -216,11 +228,7 @@ def min_utxo(tx_out, protocol_fpath):
         --tx-out {tx_out}
         """
 
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
-    )
+    process = subprocess.Popen(["sh", "-c", cmd], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     process.wait()
     process_rc = process.returncode
@@ -228,7 +236,9 @@ def min_utxo(tx_out, protocol_fpath):
     decoded_output = process_stdout_bytes.decode("utf-8")
 
     if process_rc != 0:
-        logger.error("Was not able to calculate minimum required UTXO amount for assets transaction")
+        logger.error(
+            "Was not able to calculate minimum required UTXO amount for assets transaction"
+        )
         logger.error(decoded_output)
         logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
         sys.exit(1)
@@ -253,17 +263,17 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
     with open(_protocol_fpath, "r") as params_json_f:
         protocol_params = json.load(params_json_f)
 
-    #chain constants, based on the specifications: https://hydra.iohk.io/build/5949624/download/1/shelley-ma.pdf
-    k0=0                        #coinSize=0 in mary-era, 2 in alonzo-era
+    # chain constants, based on the specifications: https://hydra.iohk.io/build/5949624/download/1/shelley-ma.pdf
+    k0 = 0  # coinSize=0 in mary-era, 2 in alonzo-era
     if era == "alonzo":
-        k0=2
+        k0 = 2
 
-    k1=6
-    k2=12                       # assetSize=12
-    k3=28                       # pidSize=28
-    k4=8                        # word=8 bytes
-    utxoEntrySizeWithoutVal=27  # 6+txOutLenNoVal(14)+txInLen(7)
-    adaOnlyUTxOSize=utxoEntrySizeWithoutVal + k0
+    k1 = 6
+    k2 = 12  # assetSize=12
+    k3 = 28  # pidSize=28
+    k4 = 8  # word=8 bytes
+    utxoEntrySizeWithoutVal = 27  # 6+txOutLenNoVal(14)+txInLen(7)
+    adaOnlyUTxOSize = utxoEntrySizeWithoutVal + k0
 
     minUTXOValue = protocol_params.get("minUTxOValue")
     utxoCostPerWord = protocol_params.get("utxoCostPerWord")
@@ -271,39 +281,39 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
         # at the moment of writing (20211206) returns: 999978
         minUTXOValue = utxoCostPerWord * adaOnlyUTxOSize
 
-    #preload it with the minUTXOValue (1ADA), will be overwritten if costs are higher
+    # preload it with the minUTXOValue (1ADA), will be overwritten if costs are higher
     # minOutUTXO - should 1ADA - 1,000,000Lovelace
     result = minUTXOValue
 
-    parts = tx_out.split('+') # [ addr, bal, asset[s...] ]
+    parts = tx_out.split("+")  # [ addr, bal, asset[s...] ]
 
     print(parts)
 
     if len(parts) > 2:
 
-        idx = 2 # skip, addr and bal, start with assets
-        pidCollector    = []    #holds the list of individual policyIDs
-        assetsCollector = []    #holds the list of individual assetHases (policyID+assetName)
-        nameCollector   = []    #holds the list of individual assetNames(hex format)
+        idx = 2  # skip, addr and bal, start with assets
+        pidCollector = []  # holds the list of individual policyIDs
+        assetsCollector = []  # holds the list of individual assetHases (policyID+assetName)
+        nameCollector = []  # holds the list of individual assetNames(hex format)
 
         # iterate over assets attached to UTXO
         while len(parts) > idx:
 
-            #separate assetamount from asset_hash(policyID.assetName)
-            complete_asset_info = list(filter(None, parts[idx].replace('"', "").split(' ')))
+            # separate assetamount from asset_hash(policyID.assetName)
+            complete_asset_info = list(filter(None, parts[idx].replace('"', "").split(" ")))
             asset_hash = complete_asset_info[1]
 
             # split asset_hash_name into policyID and assetName(hex)
             # later when we change the tx-out format to full hex format
             # this can be simplified into a stringsplit
-            asset_hash_data_lst = asset_hash.split('.')
+            asset_hash_data_lst = asset_hash.split(".")
             asset_hash_policy = asset_hash_data_lst[0]
 
             asset_hash_hexname = asset_hash_data_lst[1]
 
             # if asset name is in ASCII format
             if not hex_name:
-                asset_hash_hexname = asset_hash_data_lst[1].encode('utf-8').hex()
+                asset_hash_hexname = asset_hash_data_lst[1].encode("utf-8").hex()
 
             # Testing conversion in bash:
             # echo -n $1 | xxd -b -ps -c 80 | tr -d '\n'
@@ -324,12 +334,16 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
 
     # get sumAssetNameLengths
     # divide consolidated hexstringlength by 2 because 2 hex chars -> 1 byte
-    sumAssetNameLengths = int(len(  ''.join(set(nameCollector)).strip()  )/2)
+    sumAssetNameLengths = int(len("".join(set(nameCollector)).strip()) / 2)
 
-    roundupBytesToWords = math.floor((numAssets*k2 + sumAssetNameLengths + numPIDs*k3 + (k4-1))/k4)
+    roundupBytesToWords = math.floor(
+        (numAssets * k2 + sumAssetNameLengths + numPIDs * k3 + (k4 - 1)) / k4
+    )
     tokenBundleSize = k1 + roundupBytesToWords
 
-    minAda = math.floor(minUTXOValue / adaOnlyUTxOSize) * (utxoEntrySizeWithoutVal + tokenBundleSize)
+    minAda = math.floor(minUTXOValue / adaOnlyUTxOSize) * (
+        utxoEntrySizeWithoutVal + tokenBundleSize
+    )
 
     if minAda > result:
         result = minAda
@@ -487,6 +501,4 @@ def wait_for_tx(address, tx_id, timeout=60, network="--mainnet"):
     elapsed_time = int(round(end - start, 0))
 
     if timeouted:
-        logger.warning(
-            "TX %s timeouted after %d seconds", tx_id, elapsed_time
-        )
+        logger.warning("TX %s timeouted after %d seconds", tx_id, elapsed_time)

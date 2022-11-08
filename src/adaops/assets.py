@@ -44,7 +44,11 @@ def get_key_hash(key_path, cwd=None):
 
     _key_file = check_file_exists(key_path)
 
-    hash_cmd = [ "sh", "-c", f"cardano-cli address key-hash --payment-verification-key-file {_key_file}"]
+    hash_cmd = [
+        "sh",
+        "-c",
+        f"cardano-cli address key-hash --payment-verification-key-file {_key_file}",
+    ]
 
     process = subprocess.Popen(
         hash_cmd,
@@ -118,9 +122,9 @@ def find_asset_utxo(utxos_json, asset_name, policy_id=None):
     """
     utxos = []
     for utxo, assets_map in utxos_json.items():
-        if assets_map.get('tokens', False):
+        if assets_map.get("tokens", False):
             # print(assets_map.get('tokens', False))
-            for pol_id, tokens in assets_map.get('tokens').items():
+            for pol_id, tokens in assets_map.get("tokens").items():
                 for token in tokens:
                     if token == asset_name:
                         # if specific policy_id provided check with pol_id under current UTXO
@@ -133,7 +137,7 @@ def find_asset_utxo(utxos_json, asset_name, policy_id=None):
     return tuple(set(utxos))
 
 
-def get_assets_str(utxos_json, utxo, asset_name='', policy_id=None, asset_amount=0):
+def get_assets_str(utxos_json, utxo, asset_name="", policy_id=None, asset_amount=0):
     """Return assets string with counts ready to be inserted in tx_out string 'addr+ada+"get_assets_utxo_str()"'
 
     utxos_json - JSON/Dictionary represeneting complete balance, all UTXOs, of that address
@@ -155,7 +159,7 @@ def get_assets_str(utxos_json, utxo, asset_name='', policy_id=None, asset_amount
     """
 
     utxo_balance = utxos_json[utxo]
-    utxo_tokens = utxo_balance.get('tokens', None)
+    utxo_tokens = utxo_balance.get("tokens", None)
 
     # return None if UTXO has no tokens balance
     if not utxo_tokens:
