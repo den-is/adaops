@@ -1,6 +1,8 @@
 import logging
 import subprocess
 import sys
+import json
+from tempfile import NamedTemporaryFile
 
 from adaops.var import cmd_str_cleanup
 
@@ -120,3 +122,56 @@ def generate_node_kes_keys(name_prefix="kes", cwd=None):
         sys.exit(1)
 
     return (f"{cwd}/{name_prefix}.vkey", f"{cwd}/{name_prefix}.skey")
+
+
+def kes_period_info(node_op_cert, network="--mainnet", cwd=None):
+    """Retrieve KES information from a node Op cert.
+    Returns python dict
+
+    Works only for cardano-cli >=1.35.3
+    cardano-cli <=1.34.1 returns wrong data
+    https://github.com/input-output-hk/cardano-node/issues/3689
+    """
+
+    process_rc = -1
+    kesdata = None
+    decoded_output = None
+    cmd = []
+
+    with NamedTemporaryFile() as tmpf:
+
+        tmp_file_dst = tmpf.name
+        print(tmp_file_dst)
+
+        cmd = [
+            "sh",
+            "-c",
+            f"""cardano-cli query kes-period-info {network} \
+                --op-cert-file {node_op_cert} \
+                --out-file {tmp_file_dst}""",
+        ]
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=cwd,
+        )
+
+        process.wait()
+        process_rc = process.returncode
+
+        process_stdout_bytes = process.stdout.read()
+        decoded_output = process_stdout_bytes.decode("utf-8")
+
+        if process_rc == 0:
+            with open(tmp_file_dst, "r") as tmpfr:
+                kesdata = json.load(tmpfr)
+
+    if process_rc != 0:
+        logger.error(f"Was not able to get KES info for the node OP cert: {node_op_cert}")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        sys.exit(1)
+
+    return kesdata
