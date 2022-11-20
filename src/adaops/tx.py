@@ -56,6 +56,7 @@ def build_tx(
         "--allegra-era",
         "--mary-era",
         "--alonzo-era",
+        "--babbage-era",
     ]
 
     if era_arg not in eras_args:
@@ -207,7 +208,7 @@ def get_tx_fee(
     return tx_fee_lovelace
 
 
-def min_utxo(tx_out, protocol_fpath):
+def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
     """Calculates minimum required UTXO amount in tx_out to send with assets
     Since Alonzo era.
     Returns int Lovelaces.
@@ -222,8 +223,29 @@ def min_utxo(tx_out, protocol_fpath):
 
     _protocol_fpath = check_file_exists(protocol_fpath)
 
-    cmd = f"""cardano-cli transaction calculate-min-required-utxo \
-        --alonzo-era \
+    eras_args = [
+        "",
+        None,
+        "--byron-era",
+        "--shelley-era",
+        "--allegra-era",
+        "--mary-era",
+        "--alonzo-era",
+        "--babbage-era",
+    ]
+
+    if era_arg not in eras_args:
+        logger.error(
+            "Selected era %s argument is not in the list of available era arguments: %s",
+            era_arg,
+            eras_args,
+        )
+        logger.error("Exiting")
+        sys.exit(1)
+    elif not era_arg:
+        era_arg = ""
+
+    cmd = f"""cardano-cli transaction calculate-min-required-utxo {era_arg} \
         --protocol-params-file {_protocol_fpath} \
         --tx-out {tx_out}
         """
@@ -252,9 +274,15 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
     """Calculate minimum required UTXO for assets transfer using manual/scientific method provided in Cardano papers.
     Method added as a historical record and reference for checking calculations.
 
+    Note that with an upcoming upgrade to Babbage era, the protocol parameter coinsPerUTxOWord
+    changes to coinsPerUTxOByte, which means that the price will be calculated per
+    one byte instead of per eight bytes. The calculation will therefore look as follows:
+    minUTxoVal = (160 + sizeInBytes (TxOut)) * coinsPerUTxOByte.
+    For more details, see: https://cips.cardano.org/cips/cip55/
+
     Sources:
     https://docs.cardano.org/native-tokens/minimum-ada-value-requirement
-    https://github.com/input-output-hk/cardano-ledger/blob/cde55e2ea56e601b93efdfbe37a9e840cef3b37c/doc/explanations/min-utxo-alonzo.rst
+    https://github.com/input-output-hk/cardano-ledger/blob/8b6f8e1a75034ca66fd66a39d437252eec927d71/doc/explanations/min-utxo-alonzo.rst
     """
 
     _protocol_fpath = check_file_exists(protocol_fpath)
