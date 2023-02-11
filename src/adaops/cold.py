@@ -4,7 +4,7 @@ import sys
 import json
 from tempfile import NamedTemporaryFile
 
-from adaops.var import cmd_str_cleanup
+from adaops.var import cmd_str_cleanup, check_file_exists
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,53 @@ def generate_node_cold_keys(name_prefix="cold", cwd=None):
         f"{cwd}/{name_prefix}.skey",
         f"{cwd}/{name_prefix}.counter",
     )
+
+
+def generate_counter_file(counter_value, node_vkey, name_prefix="cold", cwd=None):
+    """Generates new counter file
+
+    Runs on air-gapped offline node
+    returns path to a new counter file
+    """
+
+    if isinstance(counter_value, int):
+        if counter_value <= 0:
+            logger.error("counter_value should be a positive integer. Got: '%s'", counter_value)
+            sys.exit(1)
+    else:
+        logger.error("counter_value should be a positive integer. Got: '%s'", counter_value)
+        sys.exit(1)
+
+    check_file_exists(node_vkey)
+
+    cmd = [
+        "sh",
+        "-c",
+        f"""cardano-cli node new-counter \
+            --cold-verification-key-file {node_vkey} \
+            --counter-value {counter_value} \
+            --operational-certificate-issue-counter-file {name_prefix}.counter""",
+    ]
+
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=cwd,
+    )
+
+    process.wait()
+    process_rc = process.returncode
+    process_stdout_bytes = process.stdout.read()
+    decoded_output = process_stdout_bytes.decode("utf-8")
+
+    if process_rc != 0:
+        logger.error("Was not able to generate new counter file")
+        logger.error(decoded_output)
+        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        sys.exit(1)
+
+    return f"{cwd}/{name_prefix}.counter"
 
 
 def generate_node_vrf_keys(name_prefix="vrf", cwd=None):
