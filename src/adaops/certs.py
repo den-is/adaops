@@ -30,7 +30,7 @@ def generate_node_cert(
         "--operational-certificate-issue-counter",
         cold_counter,
         "--kes-period",
-        kes_period,
+        str(kes_period),
         "--out-file",
         output_name,
     ]
