@@ -3,6 +3,7 @@ import subprocess
 import sys
 import json
 from tempfile import NamedTemporaryFile
+from adaops import cardano_cli, NET_ARG
 
 from adaops.var import cmd_str_cleanup, check_file_exists
 
@@ -143,35 +144,26 @@ def generate_node_kes_keys(name_prefix="kes", cwd=None):
     """
 
     cmd = [
-        "sh",
-        "-c",
-        f"""cardano-cli node key-gen-KES \
-            --verification-key-file {name_prefix}.vkey \
-            --signing-key-file {name_prefix}.skey""",
+        "node",
+        "key-gen-KES",
+        "--verification-key-file",
+        f"{name_prefix}.vkey",
+        "--signing-key-file",
+        f"{name_prefix}.skey",
     ]
 
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=cwd,
-    )
+    result = cardano_cli.run(*cmd, cwd=cwd)
 
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
+    if result["rc"] != 0:
         logger.error("Was not able to generate node's KES key pair")
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
     return (f"{cwd}/{name_prefix}.vkey", f"{cwd}/{name_prefix}.skey")
 
 
-def kes_period_info(node_op_cert, network="--mainnet", cwd=None):
+def kes_period_info(node_op_cert, cwd=None):
     """Retrieve KES information from a node Op cert.
     Returns python dict
 
@@ -180,45 +172,34 @@ def kes_period_info(node_op_cert, network="--mainnet", cwd=None):
     https://github.com/input-output-hk/cardano-node/issues/3689
     """
 
-    process_rc = -1
-    kesdata = None
-    decoded_output = None
     cmd = []
+    result = {}
+    kesdata = None
 
     with NamedTemporaryFile() as tmpf:
-
         tmp_file_dst = tmpf.name
         print(tmp_file_dst)
 
         cmd = [
-            "sh",
-            "-c",
-            f"""cardano-cli query kes-period-info {network} \
-                --op-cert-file {node_op_cert} \
-                --out-file {tmp_file_dst}""",
+            "query",
+            "kes-period-info",
+            *NET_ARG,
+            "--op-cert-file",
+            node_op_cert,
+            "--out-file",
+            tmp_file_dst,
         ]
 
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            cwd=cwd,
-        )
+        result = cardano_cli.run(*cmd, cwd=cwd)
 
-        process.wait()
-        process_rc = process.returncode
-
-        process_stdout_bytes = process.stdout.read()
-        decoded_output = process_stdout_bytes.decode("utf-8")
-
-        if process_rc == 0:
+        if result["rc"] == 0:
             with open(tmp_file_dst, "r") as tmpfr:
                 kesdata = json.load(tmpfr)
 
-    if process_rc != 0:
+    if result["rc"] != 0:
         logger.error(f"Was not able to get KES info for the node OP cert: {node_op_cert}")
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
     return kesdata

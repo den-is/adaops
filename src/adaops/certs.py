@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 from adaops.var import cmd_str_cleanup
+from adaops import cardano_cli, NET_ARG
 
 logger = logging.getLogger(__name__)
 
@@ -19,29 +20,27 @@ def generate_node_cert(
     kes_period - integer, current KES period
     """
 
-    cmd = f"""cardano-cli node issue-op-cert \
-        --kes-verification-key-file {kes_vkey} \
-        --cold-signing-key-file {cold_skey} \
-        --operational-certificate-issue-counter {cold_counter} \
-        --kes-period {kes_period} \
-        --out-file {output_name}"""
+    cmd = [
+        "node",
+        "issue-op-cert",
+        "--kes-verification-key-file",
+        kes_vkey,
+        "--cold-signing-key-file",
+        cold_skey,
+        "--operational-certificate-issue-counter",
+        cold_counter,
+        "--kes-period",
+        kes_period,
+        "--out-file",
+        output_name,
+    ]
 
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=cwd,
-    )
+    result = cardano_cli.run(*cmd, cwd=cwd)
 
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
+    if result["rc"] != 0:
         logger.error("Was not able to generate node cert")
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
     return f"{cwd}/{output_name}"
@@ -127,7 +126,6 @@ def generate_pool_reg_cert(
     cwd=None,
     output_fname="pool-registration.cert",
 ):
-
     """There might be multiple pool-owner-stake-verification keys
     owners_vkeys - list of string paths to Stake VKEYs.
                    Generate into appropriate argument internaly.

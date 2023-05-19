@@ -13,6 +13,8 @@ from binascii import hexlify, unhexlify
 from json import JSONDecodeError
 from pathlib import Path
 
+from adaops import cardano_cli, NET_ARG
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,6 +42,11 @@ def check_file_exists(fpath):
 
 def cmd_str_cleanup(s):
     """Remove excess whitespaces from command string"""
+
+    if isinstance(s, list):
+        s = " ".join(s)
+
+    s = s.lstrip("sh -c ")
 
     no_newl = s.replace("\n", "")
     regex = re.compile(r"\s+", re.MULTILINE)
@@ -286,7 +293,7 @@ def current_kes_period(current_slot, genesis_data):
     return math.floor(current_slot / slots_per_period)
 
 
-def get_current_tip(item="slot", retries=3, return_json=False, network="--mainnet"):
+def get_current_tip(item="slot", retries=3, return_json=False):
     """Get current tip's slot of the blockchain
     By default return current slot.
     Possible options: 'slot', 'epoch', 'syncProgress', 'block', 'hash', 'era'
@@ -296,40 +303,32 @@ def get_current_tip(item="slot", retries=3, return_json=False, network="--mainne
     CARDANO_NODE_SOCKET_PATH env var required
     """
 
-    cmd = f"cardano-cli query tip {network}"
+    cmd = ["query", "tip", *NET_ARG]
 
-    decoded_output = ""
+    result = {}
 
     _retries = retries
     exec_success = False
     while not exec_success and _retries > 0:
         _retries -= 1
-        process = subprocess.Popen(
-            ["sh", "-c", cmd],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
 
-        process.wait()
-        process_rc = process.returncode
+        result = cardano_cli.run(*cmd)
 
-        process_stdout_bytes = process.stdout.read()
-        decoded_output = process_stdout_bytes.decode("utf-8")
-
-        if process_rc != 0:
+        if result["rc"] != 0:
             logger.warning("Was not able to get the current tip")
-            if decoded_output.startswith("MuxError"):
-                logger.warning("Got not fatal error: %s", decoded_output)
+            if result["stderr"].startswith("MuxError"):
+                logger.warning("Got not fatal error: %s", result["stderr"])
                 logger.warning("Going to retry after 3 seconds")
                 time.sleep(3)
                 continue
             else:
-                logger.error("Fatal error was:", decoded_output)
+                logger.error("Fatal error was:", result["stderr"])
+                logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
                 sys.exit(1)
         else:
             exec_success = True
 
-    response_dict = json.loads(decoded_output)
+    response_dict = json.loads(result["stdout"])
     response_keys = list(response_dict.keys())
     response_keys.append("all")
     if item not in response_keys:
@@ -375,7 +374,6 @@ def expected_slot(genesis_data, byron_genesis_data):
 
 
 def get_metadata_hash(metadata_f, cwd=None):
-
     metadata_json = {}
     with open(metadata_f) as json_file:
         metadata_json = json.load(json_file)
