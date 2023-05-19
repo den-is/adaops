@@ -1,7 +1,16 @@
 NETWORKS = {
-    "preview": {"type": "testnet", "network_magic": 2},
-    "preprod": {"type": "testnet", "network_magic": 1},
-    "mainnet": {"type": "mainnet", "network_magic": 764824073},
+    "preview": {
+        "type": "testnet",
+        "network_magic": 2,
+    },
+    "preprod": {
+        "type": "testnet",
+        "network_magic": 1,
+    },
+    "mainnet": {
+        "type": "mainnet",
+        "network_magic": 764824073,
+    },
 }
 
 
