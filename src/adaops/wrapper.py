@@ -25,7 +25,11 @@ class CardanoCLI:
 
         command = [self.cardano_binary] + list(args)
 
-        logger.debug("Command to be executed: '%s' and kwargs: '%s'", command, all_kwargs)
+        command_str = " ".join([str(arg) for arg in command])
+
+        logger.debug(
+            "Command to be executed: '%s' with Popen kwargs: '%s'", command_str, all_kwargs
+        )
 
         proc = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **all_kwargs
@@ -45,5 +49,6 @@ class CardanoCLI:
             "stdout": stdout.decode("utf-8"),
             "stderr": stderr.decode("utf-8"),
             "rc": returncode,
-            "cmd": command,
+            "cmd": command_str,
+            "popen_args": all_kwargs,
         }

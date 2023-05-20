@@ -47,7 +47,15 @@ def generate_addr_keys(fname="policy", cwd=None):
     }
 
 
-def get_key_hash(key_path, cwd=None):
+def get_key_hash(key_path):
+    """Get hash from Payment Verification key
+
+    Args:
+        key_path: Provide full path to payment vkey
+
+    Returns:
+        hash - string
+    """
     _key_file = check_file_exists(key_path)
 
     args = [
@@ -57,7 +65,7 @@ def get_key_hash(key_path, cwd=None):
         _key_file,
     ]
 
-    result = cardano_cli.run(*args, cwd=cwd)
+    result = cardano_cli.run(*args)
 
     if result["rc"] != 0:
         logger.error("Was not able to get {key_path} key hash")
@@ -69,7 +77,7 @@ def get_key_hash(key_path, cwd=None):
     return key_hash
 
 
-def get_policy_id(policy_file, cwd=None):
+def get_policy_id(policy_file):
     """Get policy ID
 
     Args:
@@ -89,7 +97,7 @@ def get_policy_id(policy_file, cwd=None):
         _policy_file,
     ]
 
-    result = cardano_cli.run(*args, cwd=cwd)
+    result = cardano_cli.run(*args)
 
     if result["rc"] != 0:
         logger.error("Was not able to generate policy crypto pair")

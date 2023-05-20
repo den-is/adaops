@@ -40,6 +40,8 @@ def get_pool_id(cold_vkey="cold.vkey", cwd=None):
 def get_pool_stake_snapshot(pool_id):
     """Get active pool stake snapshot.
 
+    Requires RAM. In case if cardano-node process is killed because of OOM long validation process might occur.
+
     CARDANO_NODE_SOCKET_PATH env var required
     """
 
@@ -75,6 +77,8 @@ def get_pool_stake_snapshot(pool_id):
 
 def get_pool_params(pool_id):
     """Get active pool parameters.
+
+    Requires RAM. In case if cardano-node process is killed because of OOM long validation process might occur.
 
     CARDANO_NODE_SOCKET_PATH env var required
     """

@@ -274,22 +274,10 @@ def get_stake_rewards(stake_addr):
     return balances_json
 
 
-def current_kes_period(current_slot, genesis_data):
-    """Returns Current KES period based on current tip of the network (slot).
-
-    current_tip_slot/genesis_data['slotsPerKESPeriod']
-
-    """
-
-    slots_per_period = genesis_data["slotsPerKESPeriod"]
-
-    return math.floor(current_slot / slots_per_period)
-
-
 def get_current_tip(item="slot", retries=3, return_json=False):
     """Get current tip's slot of the blockchain
     By default return current slot.
-    Possible options: 'slot', 'epoch', 'syncProgress', 'block', 'hash', 'era'
+    Possible options: 'all', 'slot', 'epoch', 'syncProgress', 'block', 'hash', 'era'
     return_json - return JSON string. default False
 
     Runs on online machine.
@@ -340,6 +328,19 @@ def get_current_tip(item="slot", retries=3, return_json=False):
         return json.dumps(current_tip_item)
 
     return current_tip_item
+
+
+def current_kes_period(current_slot, genesis_data):
+    """Returns Current KES period based on current tip of the network (slot).
+    Requires Shelley genesis data file
+
+    current_tip_slot/genesis_data['slotsPerKESPeriod']
+
+    """
+
+    slots_per_period = genesis_data["slotsPerKESPeriod"]
+
+    return math.floor(current_slot / slots_per_period)
 
 
 def expected_slot(genesis_data, byron_genesis_data):

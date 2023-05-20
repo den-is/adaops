@@ -17,7 +17,7 @@ NETWORKS = {
 def net_arg(net):
     """Return cardano-cli network argument as list"""
 
-    network = NETWORKS.get(net)
+    network = NETWORKS.get(net, None)
 
     if not network:
         raise ValueError(

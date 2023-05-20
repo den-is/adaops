@@ -139,7 +139,7 @@ def generate_node_kes_keys(name_prefix="kes", cwd=None):
     return (f"{cwd}/{name_prefix}.vkey", f"{cwd}/{name_prefix}.skey")
 
 
-def kes_period_info(node_op_cert, cwd=None):
+def kes_period_info(node_op_cert):
     """Retrieve KES information from a node Op cert.
     Returns python dict
 
@@ -147,6 +147,8 @@ def kes_period_info(node_op_cert, cwd=None):
     cardano-cli <=1.34.1 returns wrong data
     https://github.com/input-output-hk/cardano-node/issues/3689
     """
+
+    check_file_exists(node_op_cert)
 
     result = {}
     kesdata = None
@@ -165,7 +167,7 @@ def kes_period_info(node_op_cert, cwd=None):
             tmp_file_dst,
         ]
 
-        result = cardano_cli.run(*args, cwd=cwd)
+        result = cardano_cli.run(*args)
 
         if result["rc"] == 0:
             with open(tmp_file_dst, "r") as tmpfr:
