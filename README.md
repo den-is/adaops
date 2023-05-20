@@ -5,13 +5,13 @@ Mainly it is wrapper around **cardano-cli** and bunch of other helpful methods.
 
 :warning::hammer_and_wrench: Early development stage. Wear your helmet! :construction_worker:
 
-### Requirements
+## Requirements
 - **cardano-cli** - binary should be discoverable in the `$PATH`
 - **v1.27** - is a minimum supported version of cardano-cli (__cardano-node__)
 - **CARDANO_NODE_SOCKET_PATH** - Required for online operations. Env variable should be declared and pointing to existing socker of running cardano-node process.
 - Python 3.7+
 
-### Installation
+## Installation
 At this point of time I strongly recommend to use Python `venv`
 
 ```sh
@@ -33,7 +33,16 @@ source venv/bin/activate
 pip install -e .
 ```
 
-### Example usage
+## Configuration
+Add `.env` file in the root of your project
+
+|ENV                     |Default Value| Description                                                       |
+|------------------------|-------------|-------------------------------------------------------------------|
+|ADAOPS_CARDANO_CLI      |"cardano-cli"|Path to "cardano-cli" either found in $PATH or full path to binary |
+|ADAOPS_NETWORK          |"mainnet"    |Cardano network to operate on. Possible values: "mainnet", "preprod", "preview"|
+|CARDANO_NODE_SOCKET_PATH|             |Not configured using `.env`. Your env should provide it.           |
+
+## Example usage
 ```py
 from adaops.var import get_current_tip
 tip = get_current_tip()

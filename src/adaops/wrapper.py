@@ -1,6 +1,9 @@
-import subprocess
+import logging
 import os
 import shutil
+import subprocess
+
+logger = logging.getLogger(__name__)
 
 
 class CardanoCLI:
@@ -22,13 +25,15 @@ class CardanoCLI:
 
         command = [self.cardano_binary] + list(args)
 
+        logger.debug("Command to be executed: '%s' and kwargs: '%s'", command, all_kwargs)
+
         proc = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **all_kwargs
         )
 
         try:
             stdout, stderr = proc.communicate()
-        # TODO: for now it is useless since we are not passing timeout to communicate
+        # TODO: for now it is useless since we are not passing timeout to communicate()
         # TODO: maybe wrap whole subprocess.Poppen in try-except
         except subprocess.TimeoutExpired:
             proc.kill()

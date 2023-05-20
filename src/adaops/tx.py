@@ -1,12 +1,12 @@
 import json
 import logging
 import math
-import subprocess
 import sys
 import time
 from timeit import default_timer as timer
 
-from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup, get_balances, l2a
+from adaops import cardano_cli, NET_ARG
+from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup, get_balances
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,6 @@ def build_tx(
     draft=True,
     cwd=None,
 ):
-
     """Generates unsigned transaction file. Either draft or raw.
     Usually should be run on air-gapped machine.
 
@@ -88,9 +87,9 @@ def build_tx(
     if withdrawal:
         withdrawal_args = f"--withdrawal {withdrawal}"
 
-    invalid_hereafter_args = ""
+    invalid_hereafter_arg = ""
     if invalid_hereafter is not None:
-        invalid_hereafter_args = f"--invalid-hereafter {invalid_hereafter}"
+        invalid_hereafter_arg = f"--invalid-hereafter {invalid_hereafter}"
 
     invalid_before_arg = ""
     if invalid_before is not None:
@@ -115,38 +114,45 @@ def build_tx(
         )
         sys.exit(1)
 
-    metadata_json_file = ""
+    metadata_json_file_arg = ""
     if metadata_file:
         logger.info("Got --metadata-json-file. Going to check if it exists.")
         check_file_exists(metadata_file)
-        metadata_json_file = f"--metadata-json-file {metadata_file}"
+        metadata_json_file_arg = f"--metadata-json-file {metadata_file}"
 
-    cmd = f"""cardano-cli transaction build-raw {era_arg} \
-        {tx_in_args} \
-        {tx_out_args} {invalid_hereafter_args} {invalid_before_arg} \
-        --fee {fee} \
-        --out-file {output_fname} \
-        {certs_args} {withdrawal_args} {minting_args} {metadata_json_file} {_extra_args}"""
-
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=cwd,
+    args = list(
+        filter(
+            None,
+            [
+                "transaction",
+                "build-raw",
+                era_arg,
+                *tx_in_args.split(" "),
+                *tx_out_args.split(" "),
+                *invalid_hereafter_arg.split(" "),
+                *invalid_before_arg.split(" "),
+                "--fee",
+                str(fee),
+                "--out-file",
+                output_fname,
+                *certs_args.split(" "),
+                *withdrawal_args.split(" "),
+                *minting_args.split(" "),
+                *metadata_json_file_arg.split(" "),
+                *_extra_args.split(" "),
+            ],
+        )
     )
 
-    process.wait()
-    process_rc = process.returncode
+    result = cardano_cli.run(*args, cwd=cwd)
 
-    if process_rc != 0:
-        process_stdout_bytes = process.stdout.read()
-        decoded_output = process_stdout_bytes.decode("utf-8")
+    if result["rc"] != 0:
         if draft:
             logger.error("Was not able to build Transaction Draft")
         else:
             logger.error("Was not able to build Raw Transaction")
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
     return f"{cwd}/{output_fname}"
@@ -159,10 +165,8 @@ def get_tx_fee(
     witnesses=1,
     byron_witnesses=0,
     protocol_fpath="../protocol.json",
-    network="--mainnet",
     cwd=None,
 ):
-
     """Witnesses are the number of keys that will be signing the transaction.
     Runs on online node.
 
@@ -176,34 +180,33 @@ def get_tx_fee(
     check_socket_env_var()
     _protocol_fpath = check_file_exists(protocol_fpath)
 
-    cmd = f"""cardano-cli transaction calculate-min-fee \
-        --tx-body-file {tx_file} \
-        --tx-in-count {tx_in_count} \
-        --tx-out-count {tx_out_count} \
-        --witness-count {witnesses} \
-        --byron-witness-count {byron_witnesses} \
-        --protocol-params-file {_protocol_fpath} \
-        {network}"""
+    args = [
+        "transaction",
+        "calculate-min-fee",
+        "--tx-body-file",
+        tx_file,
+        "--tx-in-count",
+        str(tx_in_count),
+        "--tx-out-count",
+        tx_out_count,
+        "--witness-count",
+        str(witnesses),
+        "--byron-witness-count",
+        str(byron_witnesses),
+        "--protocol-params-file",
+        _protocol_fpath,
+        *NET_ARG,
+    ]
 
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=cwd,
-    )
+    result = cardano_cli.run(*args, cwd=cwd)
 
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
+    if result["rc"] != 0:
         logger.error("Was not able to calculate fees")
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
-    tx_fee_lovelace = int(decoded_output.split(" ")[0])
+    tx_fee_lovelace = int(result["stdout"].split(" ")[0])
 
     return tx_fee_lovelace
 
@@ -245,27 +248,28 @@ def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
     elif not era_arg:
         era_arg = ""
 
-    cmd = f"""cardano-cli transaction calculate-min-required-utxo {era_arg} \
-        --protocol-params-file {_protocol_fpath} \
-        --tx-out {tx_out}
-        """
+    args = [
+        "transaction",
+        "calculate-min-required-utxo",
+        "calculate-min-required-utxo",
+        era_arg,
+        "--protocol-params-file",
+        _protocol_fpath,
+        "--tx-out",
+        tx_out,
+    ]
 
-    process = subprocess.Popen(["sh", "-c", cmd], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    result = cardano_cli.run(*list(filter(None, args)))
 
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
+    if result["rc"] != 0:
         logger.error(
             "Was not able to calculate minimum required UTXO amount for assets transaction"
         )
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
-    tx_fee_lovelace = int(decoded_output.split(" ")[1])
+    tx_fee_lovelace = int(result["stdout"].split(" ")[1])
 
     return tx_fee_lovelace
 
@@ -318,7 +322,6 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
     print(parts)
 
     if len(parts) > 2:
-
         idx = 2  # skip, addr and bal, start with assets
         pidCollector = []  # holds the list of individual policyIDs
         assetsCollector = []  # holds the list of individual assetHases (policyID+assetName)
@@ -326,7 +329,6 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
 
         # iterate over assets attached to UTXO
         while len(parts) > idx:
-
             # separate assetamount from asset_hash(policyID.assetName)
             complete_asset_info = list(filter(None, parts[idx].replace('"', "").split(" ")))
             asset_hash = complete_asset_info[1]
@@ -379,7 +381,7 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
     return result
 
 
-def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", network="--mainnet", cwd=None):
+def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", cwd=None):
     """Witnesses are the number of keys that will be signing the transaction.
 
     Examples:
@@ -395,28 +397,23 @@ def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", network="--mai
         ["--signing-key-file {}".format(skey) for skey in signing_keys_list]
     )
 
-    cmd = f"""cardano-cli transaction sign \
-        --tx-body-file {tx_file} \
-        {signing_keys_args} \
-        {network} \
-        --out-file {output_fname}"""
+    args = [
+        "transaction",
+        "sign",
+        "--tx-body-file",
+        tx_file,
+        *signing_keys_args.split(" "),
+        *NET_ARG,
+        "--out-file",
+        output_fname,
+    ]
 
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=cwd,
-    )
-    process.wait()
-    process_rc = process.returncode
+    result = cardano_cli.run(*list(filter(None, args)))
 
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
+    if result["rc"] != 0:
         logger.error("Signing TX did not work.")
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
     return f"{cwd}/{output_fname}"
@@ -435,33 +432,26 @@ def get_tx_id(tx_file=None, tx_body_file=None):
         sys.exit(1)
 
     if tx_body_file and not tx_file:
-        cmd_tx_arg = "--tx-body-file"
-        check_file_exists(tx_file)
-        cmd = f"cardano-cli transaction txid {cmd_tx_arg} {tx_body_file}"
+        check_file_exists(tx_body_file)
+        args = ["transaction", "txid", "--tx-body-file", tx_body_file]
     else:
-        cmd_tx_arg = "--tx-file"
         check_file_exists(tx_file)
-        cmd = f"cardano-cli transaction txid {cmd_tx_arg} {tx_file}"
+        args = ["transaction", "txid", "--tx-file", tx_file]
 
-    process = subprocess.Popen(["sh", "-c", cmd], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    result = cardano_cli.run(*list(filter(None, args)))
 
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
+    if result["rc"] != 0:
         logger.error("Was not able to get transaction ID")
-        logger.error(decoded_output.strip())
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error(result["stderr"].strip())
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
-    tx_id = decoded_output.strip()
+    tx_id = result["stdout"].strip()
 
     return tx_id
 
 
-def submit_tx(signed_tx_f="tx.signed", network="--mainnet", cwd=None):
+def submit_tx(signed_tx_f="tx.signed", cwd=None):
     """Submitting signed transaction to blockchain
 
     requires CARDANO_NODE_SOCKET env variable
@@ -469,25 +459,22 @@ def submit_tx(signed_tx_f="tx.signed", network="--mainnet", cwd=None):
     """
 
     check_socket_env_var()
+    _signed_tx_f = check_file_exists(signed_tx_f)
 
-    cmd = f"cardano-cli transaction submit --tx-file {signed_tx_f} {network}"
+    args = [
+        "transaction",
+        "submit",
+        "--tx-file",
+        _signed_tx_f,
+        *NET_ARG,
+    ]
 
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=cwd,
-    )
+    result = cardano_cli.run(*args, cwd=cwd)
 
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
+    if result["rc"] != 0:
         logger.error("Submiting TX did not work.")
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
     tx_id = get_tx_id(signed_tx_f)
@@ -496,7 +483,7 @@ def submit_tx(signed_tx_f="tx.signed", network="--mainnet", cwd=None):
     return True
 
 
-def wait_for_tx(address, tx_id, timeout=60, network="--mainnet"):
+def wait_for_tx(address, tx_id, timeout=60):
     """Return transaction ID using either TX body file, or signed/final TX file
 
     One of the inputs is required. In case if both are supplied 'tx_file' will take precedence.
@@ -508,12 +495,11 @@ def wait_for_tx(address, tx_id, timeout=60, network="--mainnet"):
     timeouted = False
 
     while not tx_arrived:
-
         if (end - start) >= timeout:
             timeouted = True
             break
 
-        utxos = get_balances(address=address, network=network)
+        utxos = get_balances(address=address)
 
         for utxo in utxos.keys():
             utxo_hash = utxo.split("#")[0]

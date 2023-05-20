@@ -10,7 +10,9 @@ CARDANO_NODE_ARGS = {}
 
 
 def check_cardano_node_proc(proc_name="cardano-node"):
-    """Checking if cardano-node process exists and extract command line arguments with values"""
+    """Checking if cardano-node process exists and
+    extracts command line arguments with values
+    """
 
     for proc in psutil.process_iter():
         try:

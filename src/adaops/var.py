@@ -5,7 +5,6 @@ import math
 import os
 import re
 import shutil
-import subprocess
 import sys
 import time
 import urllib.request
@@ -93,7 +92,7 @@ def change_calc(init_balance, *args):
     return init_balance - sum([abs(arg) for arg in args])
 
 
-def get_protocol_params(network="--mainnet"):
+def get_protocol_params():
     """Get protocol parameters
 
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
@@ -101,16 +100,12 @@ def get_protocol_params(network="--mainnet"):
 
     check_socket_env_var()
 
-    cmd = f"cardano-cli query protocol-parameters {network}"
+    args = ["query", "protocol-parameters", *NET_ARG]
 
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
+    result = cardano_cli.run(*args)
 
     try:
-        params = json.loads(process.stdout.read())
+        params = json.loads(result["stdout"])
         return params
 
     except (JSONDecodeError, ValueError):
@@ -156,7 +151,7 @@ def h2a(hex_s):
     return unhexlify(hex_s).decode()
 
 
-def get_balances(address, user_utxo=None, network="--mainnet"):
+def get_balances(address, user_utxo=None):
     """Get all TX hashes with their balance under given address
 
     Runs on online machine.
@@ -176,28 +171,26 @@ def get_balances(address, user_utxo=None, network="--mainnet"):
 
     check_socket_env_var()
 
-    cmd = f"cardano-cli query utxo --address {address} {network} --out-file /dev/stdout"
+    args = [
+        "query",
+        "utxo",
+        "--address",
+        address,
+        *NET_ARG,
+        "--out-file",
+        "/dev/stdout",
+    ]
 
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
+    result = cardano_cli.run(*args)
 
-    process.wait()
-    process_rc = process.returncode
-
-    process_stdout_bytes = process.stdout.read()
-
-    if process_rc != 0:
+    if result["rc"] != 0:
         logger.error("Not able to get address balances")
-        logger.error(process_stdout_bytes.decode("utf-8"))
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
-        logger.error("Exiting")
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
     try:
-        address_balances_json = json.loads(process_stdout_bytes)
+        address_balances_json = json.loads(result["stdout"])
     except (JSONDecodeError, ValueError):
         logger.error("Not able to parse address balances JSON", exc_info=1)
         sys.exit(1)
@@ -235,19 +228,19 @@ def get_balances(address, user_utxo=None, network="--mainnet"):
     return output
 
 
-def get_total_balance(address, network="--mainnet"):
+def get_total_balance(address):
     """Get total balance for the given address, in Lovelaces
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
     """
 
-    txs = get_balances(address=address, network=network)
+    txs = get_balances(address=address)
     return sum([txs[tx]["lovelace"] for tx in txs])
 
 
-def get_stake_rewards(stake_addr, network="--mainnet"):
-    """Get given stake address rewards balance
+def get_stake_rewards(stake_addr):
+    """Get rewards balance of the specified stake_addr
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
@@ -255,27 +248,27 @@ def get_stake_rewards(stake_addr, network="--mainnet"):
 
     check_socket_env_var()
 
-    cmd = f"cardano-cli query stake-address-info --address {stake_addr} {network}"
+    args = [
+        "query",
+        "stake-address-info",
+        "--address",
+        stake_addr,
+        *NET_ARG,
+    ]
 
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
+    result = cardano_cli.run(*args)
 
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-
-    if process_rc != 0:
-        logger.error(process_stdout_bytes.decode("utf-8"))
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+    if result["rc"] != 0:
+        logger.error("Was not able to get rewards balance for stake address")
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
     try:
-        balances_json = json.loads(process_stdout_bytes)
+        balances_json = json.loads(result["stdout"])
     except (ValueError, JSONDecodeError):
-        logger.error("Not able to parse stake address rewards balance JSON", exc_info=1)
+        logger.error("Not able to parse stake address rewards balance JSON:", exc_info=1)
+        logger.error(result["stdout"])
         sys.exit(1)
 
     return balances_json
@@ -303,7 +296,7 @@ def get_current_tip(item="slot", retries=3, return_json=False):
     CARDANO_NODE_SOCKET_PATH env var required
     """
 
-    cmd = ["query", "tip", *NET_ARG]
+    args = ["query", "tip", *NET_ARG]
 
     result = {}
 
@@ -312,7 +305,7 @@ def get_current_tip(item="slot", retries=3, return_json=False):
     while not exec_success and _retries > 0:
         _retries -= 1
 
-        result = cardano_cli.run(*cmd)
+        result = cardano_cli.run(*args)
 
         if result["rc"] != 0:
             logger.warning("Was not able to get the current tip")
@@ -398,27 +391,22 @@ def get_metadata_hash(metadata_f, cwd=None):
         )
         sys.exit(1)
 
-    cmd = f"cardano-cli stake-pool metadata-hash --pool-metadata-file {metadata_f}"
+    args = [
+        "stake-pool",
+        "metadata-hash",
+        "--pool-metadata-file",
+        metadata_f,
+    ]
 
-    process = subprocess.Popen(
-        ["sh", "-c", cmd],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        cwd=cwd,
-    )
+    result = cardano_cli.run(*args, cwd=cwd)
 
-    process.wait()
-    process_rc = process.returncode
-    process_stdout_bytes = process.stdout.read()
-    decoded_output = process_stdout_bytes.decode("utf-8")
-
-    if process_rc != 0:
-        logger.error("Was not able to generate metadata hash")
-        logger.error(decoded_output)
-        logger.error("Failed command was: %s", cmd_str_cleanup(cmd))
+    if result["rc"] != 0:
+        logger.error("Was not able to generate hash for pool's metadata")
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         sys.exit(1)
 
-    pool_metadata_hash = decoded_output.strip()
+    pool_metadata_hash = result["stdout"].strip()
 
     return pool_metadata_hash
 
