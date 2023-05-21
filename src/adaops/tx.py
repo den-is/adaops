@@ -132,7 +132,7 @@ def build_tx(
                 *invalid_hereafter_arg.split(" "),
                 *invalid_before_arg.split(" "),
                 "--fee",
-                str(fee),
+                fee,
                 "--out-file",
                 output_fname,
                 *certs_args.split(" "),

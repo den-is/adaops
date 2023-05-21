@@ -67,7 +67,7 @@ def generate_counter_file(counter_value, node_vkey, name_prefix="cold", cwd=None
         "--cold-verification-key-file",
         node_vkey,
         "--counter-value",
-        str(counter_value),
+        counter_value,
         "--operational-certificate-issue-counter-file",
         f"{name_prefix}.counter",
     ]
