@@ -23,7 +23,7 @@ class CardanoCLI:
     def run(self, *args, **kwargs):
         all_kwargs = {**self.init_kwargs, **kwargs}
 
-        command = [self.cardano_binary] + list(args)
+        command = [self.cardano_binary] + [str(arg) for arg in args]
 
         command_str = " ".join([str(arg) for arg in command])
 
