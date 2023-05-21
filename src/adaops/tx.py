@@ -408,7 +408,7 @@ def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", cwd=None):
         output_fname,
     ]
 
-    result = cardano_cli.run(*list(filter(None, args)))
+    result = cardano_cli.run(*list(filter(None, args)), cwd=cwd)
 
     if result["rc"] != 0:
         logger.error("Signing TX did not work.")
