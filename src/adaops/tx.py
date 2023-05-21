@@ -451,6 +451,41 @@ def get_tx_id(tx_file=None, tx_body_file=None):
     return tx_id
 
 
+def view_tx_info(tx_file=None, tx_body_file=None):
+    """Return info about transaction
+
+    Args:
+        tx_file: Input filepath of the JSON Tx (signed). Defaults to None.
+        tx_body_file: Input filepath of the JSON TxBody (unsigned). Defaults to None.
+
+    Returns:
+        output (string)
+    """
+
+    if not tx_file and not tx_body_file:
+        logger.error("Either 'tx_file' or 'tx_body_file' should be provided. None provided")
+        sys.exit(1)
+
+    if tx_body_file and not tx_file:
+        check_file_exists(tx_body_file)
+        args = ["transaction", "view", "--tx-body-file", tx_body_file]
+    else:
+        check_file_exists(tx_file)
+        args = ["transaction", "view", "--tx-file", tx_file]
+
+    result = cardano_cli.run(*args)
+
+    if result["rc"] != 0:
+        logger.error("Was not able to get transaction info")
+        logger.error(result["stderr"].strip())
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
+        sys.exit(1)
+
+    output = result["stdout"].strip()
+
+    return output
+
+
 def submit_tx(signed_tx_f="tx.signed", cwd=None):
     """Submitting signed transaction to blockchain
 
