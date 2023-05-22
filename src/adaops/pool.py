@@ -9,8 +9,21 @@ from adaops.var import check_file_exists, cmd_str_cleanup, check_socket_env_var
 logger = logging.getLogger(__name__)
 
 
-def get_pool_id(cold_vkey="cold.vkey", cwd=None):
-    """Returns Pool's ID"""
+def get_pool_id(cold_vkey="cold.vkey", output_format="hex", cwd=None):
+    """Return pool ID in selected format
+
+    Args:
+        cold_vkey: (str) fullpath or filename of cold verification key file.
+            If filename is not fullpath, then "cwd" arg should be provided and filename will be looked up in cwd.
+        output_format: (str) Accepted output formats are "hex" and "bech32" (default is "hex")
+
+    Returns:
+        string value in specified format
+    """
+
+    if output_format not in ["hex", "bech32"]:
+        logger.error("Wrong output_format '%s' selected. Allowed values are: 'hex', 'bech32'")
+        sys.exit(1)
 
     if cwd:
         checked_f = check_file_exists(f"{cwd}/{cold_vkey}")
@@ -23,7 +36,7 @@ def get_pool_id(cold_vkey="cold.vkey", cwd=None):
         "--cold-verification-key-file",
         checked_f,
         "--output-format",
-        "hex",
+        output_format,
     ]
 
     result = cardano_cli.run(*args, cwd=cwd)

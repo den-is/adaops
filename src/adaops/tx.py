@@ -275,7 +275,8 @@ def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
 
 
 def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
-    """Calculate minimum required UTXO for assets transfer using manual/scientific method provided in Cardano papers.
+    """Deprecated. Kept for reference.
+    Calculate minimum required UTXO for assets transfer using manual/scientific method provided in Cardano papers.
     Method added as a historical record and reference for checking calculations.
 
     Note that with an upcoming upgrade to Babbage era, the protocol parameter coinsPerUTxOWord
@@ -419,6 +420,38 @@ def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", cwd=None):
     return f"{cwd}/{output_fname}"
 
 
+def submit_tx(signed_tx_f="tx.signed", cwd=None):
+    """Submitting signed transaction to blockchain
+
+    requires CARDANO_NODE_SOCKET env variable
+    should run on online machine
+    """
+
+    check_socket_env_var()
+    _signed_tx_f = check_file_exists(signed_tx_f)
+
+    args = [
+        "transaction",
+        "submit",
+        "--tx-file",
+        _signed_tx_f,
+        *NET_ARG,
+    ]
+
+    result = cardano_cli.run(*args, cwd=cwd)
+
+    if result["rc"] != 0:
+        logger.error("Submiting TX did not work.")
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
+        sys.exit(1)
+
+    tx_id = get_tx_id(signed_tx_f)
+    logger.info("Successfully submitted transaction %s", tx_id)
+
+    return True
+
+
 def get_tx_id(tx_file=None, tx_body_file=None):
     """Return transaction ID using either TX body file, or signed/final TX file
 
@@ -484,38 +517,6 @@ def view_tx_info(tx_file=None, tx_body_file=None):
     output = result["stdout"].strip()
 
     return output
-
-
-def submit_tx(signed_tx_f="tx.signed", cwd=None):
-    """Submitting signed transaction to blockchain
-
-    requires CARDANO_NODE_SOCKET env variable
-    should run on online machine
-    """
-
-    check_socket_env_var()
-    _signed_tx_f = check_file_exists(signed_tx_f)
-
-    args = [
-        "transaction",
-        "submit",
-        "--tx-file",
-        _signed_tx_f,
-        *NET_ARG,
-    ]
-
-    result = cardano_cli.run(*args, cwd=cwd)
-
-    if result["rc"] != 0:
-        logger.error("Submiting TX did not work.")
-        logger.error(result["stderr"])
-        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
-
-    tx_id = get_tx_id(signed_tx_f)
-    logger.info("Successfully submitted transaction %s", tx_id)
-
-    return True
 
 
 def wait_for_tx(address, tx_id, timeout=60):
