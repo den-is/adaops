@@ -132,7 +132,10 @@ def build_tx(
                 *invalid_hereafter_arg.split(" "),
                 *invalid_before_arg.split(" "),
                 "--fee",
-                fee,
+                # if you pass fee=0 (usually during a draft tx build)
+                # filter() will remove that value from the list
+                # so convert value to string early
+                str(fee),
                 "--out-file",
                 output_fname,
                 *certs_args.split(" "),
