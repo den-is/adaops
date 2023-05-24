@@ -4,6 +4,8 @@ from adaops.networks import net_arg
 
 from dotenv import dotenv_values
 
+__version__ = "0.15.0"
+
 config = {
     **os.environ,
     **dotenv_values(".env"),

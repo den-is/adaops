@@ -1,3 +1,36 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaops"
+authors = [
+    {name = "Denis Iskandarov", email = "denis@cloudboom.io"},
+]
+description = "A wrapper ops library mostly around cardano-cli to automate various CLI scenarios."
+requires-python = ">=3.7"
+keywords = ["cardano", "ada", "blockchain", "crypto", "cryptocurrency", "cardano-cli", "cardano-node"]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "psutil",
+    "python-dotenv"
+]
+dynamic = ["version", "readme"]
+
+[project.urls]
+repository = "https://github.com/den-is/adaops/"
+issues = "https://github.com/den-is/adaops/issues"
+company = "https://cloudboom.io"
+
+[tool.setuptools.dynamic]
+version = {attr = "adaops.__version__"}
+readme = {file = ["README.md"], content-type = "text/markdown"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
