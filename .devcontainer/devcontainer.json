@@ -1,63 +1,55 @@
 {
-
+  // make sure to "reload window" after initial start/build of the container
+  // otherwise Pylance, ruff and some other stuff won't be working
 	"name": "py3-devenv",
 
 	"image": "diskandarov/pydevenv",
 
-	"settings": {
-		"editor.tabSize": 2,
-		"terminal.integrated.defaultProfile.linux": "zsh",
-		"python.defaultInterpreterPath": "/usr/local/bin/python",
-		"python.linting.enabled": true,
-		"python.linting.pylintEnabled": false,
-		"python.linting.flake8Enabled": true,
-		"python.formatting.provider": "black",
-		"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-		"python.sortImports.path": "/usr/local/py-utils/bin/isort",
-		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
-		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
-		"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
-		"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
-		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
-		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
-		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-		"python.languageServer": "Pylance",
-		// specific linters settings should go in own config files in project's root
-		"python.linting.pylintArgs": [
-			"--max-line-length=99",
-			"--disable=C0111,W0611"
-		],
-		"python.linting.flake8Args": [
-			"--max-line-length=99",
-			"--ignore=E402,F841,F401,W503"
-		],
-		"python.formatting.blackArgs": [
-			"--line-length=99"
-		],
-		// at the moment of writing vscode-python has issues with isort
-		// fixed using isort.cfg or pyproject.toml instead of vscode settings
-		"python.sortImports.args": [
-			"--profile", "black"
-		],
-		"[python]": {
-			"editor.tabSize": 4,
-			"editor.formatOnSave": true,
-			"editor.codeActionsOnSave": {
-				"source.organizeImports": true
-			},
-		},
-	},
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.tabSize": 2,
+        "editor.formatOnSave": true,
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.languageServer": "Pylance",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": false,
+        "python.formatting.provider": "black",
+        "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+        "python.formatting.blackArgs": ["--line-length=99"],
+        "python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
+        "python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
+        "ruff.path": ["/usr/local/py-utils/bin/ruff"],
+        "ruff.interpreter": ["/usr/local/bin/python"],
+        "ruff.args": [
+          "--line-length=99",
+          "--respect-gitignore",
+          "--ignore=E266"
+        ],
+        "[python]": {
+          "editor.tabSize": 4,
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+          }
+        }
+      },
 
-	"extensions": [
-		"ms-python.python",
-		"ms-python.vscode-pylance",
-		"formulahendry.code-runner",
-		"mrmlnc.vscode-duplicate",
-		"oderwat.indent-rainbow",
-		"semgrep.semgrep",
-		"esbenp.prettier-vscode",
-	],
+      "extensions": [
+        "ms-python.python",
+        "magicstack.MagicPython",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "formulahendry.code-runner",
+        "mrmlnc.vscode-duplicate",
+        "oderwat.indent-rainbow",
+        "esbenp.prettier-vscode",
+        "alexcvzz.vscode-sqlite"
+      ]
+    }
+  },
 
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
