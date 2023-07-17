@@ -1,10 +1,11 @@
 import os
-from adaops.wrapper import CardanoCLI
-from adaops.networks import net_arg
 
 from dotenv import dotenv_values
 
-__version__ = "0.15.0"
+from adaops.networks import net_arg
+from adaops.wrapper import CardanoCLI
+
+__version__ = "0.15.1"
 
 config = {
     **os.environ,

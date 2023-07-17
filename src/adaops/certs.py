@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from adaops import cardano_cli, NET_ARG
+from adaops import NET_ARG, cardano_cli
 from adaops.var import cmd_str_cleanup
 
 logger = logging.getLogger(__name__)

@@ -2,7 +2,7 @@ import logging
 import sys
 
 from adaops import cardano_cli
-from adaops.var import cmd_str_cleanup, check_file_exists
+from adaops.var import check_file_exists, cmd_str_cleanup
 
 logger = logging.getLogger(__name__)
 

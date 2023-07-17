@@ -3,8 +3,8 @@ import logging
 import sys
 from json import JSONDecodeError
 
-from adaops import cardano_cli, NET_ARG
-from adaops.var import check_file_exists, cmd_str_cleanup, check_socket_env_var
+from adaops import NET_ARG, cardano_cli
+from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup
 
 logger = logging.getLogger(__name__)
 

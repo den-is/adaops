@@ -5,7 +5,7 @@ import sys
 import time
 from timeit import default_timer as timer
 
-from adaops import cardano_cli, NET_ARG
+from adaops import NET_ARG, cardano_cli
 from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup, get_balances
 
 logger = logging.getLogger(__name__)

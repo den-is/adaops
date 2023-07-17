@@ -12,7 +12,7 @@ from binascii import hexlify, unhexlify
 from json import JSONDecodeError
 from pathlib import Path
 
-from adaops import cardano_cli, NET_ARG
+from adaops import NET_ARG, cardano_cli
 
 logger = logging.getLogger(__name__)
 
