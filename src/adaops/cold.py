@@ -170,7 +170,7 @@ def kes_period_info(node_op_cert):
         result = cardano_cli.run(*args)
 
         if result["rc"] == 0:
-            with open(tmp_file_dst, "r") as tmpfr:
+            with open(tmp_file_dst) as tmpfr:
                 kesdata = json.load(tmpfr)
 
     if result["rc"] != 0:

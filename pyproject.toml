@@ -38,3 +38,4 @@ where = ["src"]
 [tool.ruff]
 line-length = 99
 src = ["src"]
+select = ["E", "F", "B", "UP", "RUF"]

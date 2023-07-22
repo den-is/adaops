@@ -428,7 +428,7 @@ def download_meta(meta_url, dst_path):
         shutil.copyfileobj(response, out_file)
 
     valid_json_file = False
-    with open(file_dst, "r") as meta_f:
+    with open(file_dst) as meta_f:
         try:
             json.load(meta_f)
             valid_json_file = True

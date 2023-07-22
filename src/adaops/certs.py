@@ -148,7 +148,7 @@ def generate_pool_reg_cert(
 
     owners_stake_vkeys_args = " ".join(
         [
-            "--pool-owner-stake-verification-key-file {}".format(vkey_path)
+            f"--pool-owner-stake-verification-key-file {vkey_path}"
             for vkey_path in owners_stake_vkeys_list
         ]
     )
@@ -158,11 +158,10 @@ def generate_pool_reg_cert(
         sys.exit(1)
 
     pool_ipv4_relays = [
-        "--pool-relay-ipv4 {} --pool-relay-port {}".format(relay, relay_port)
-        for relay in relays_ipv4_list
+        f"--pool-relay-ipv4 {relay} --pool-relay-port {relay_port}" for relay in relays_ipv4_list
     ]
     pool_dns_relays = [
-        "--single-host-pool-relay {} --pool-relay-port {}".format(relay, relay_port)
+        f"--single-host-pool-relay {relay} --pool-relay-port {relay_port}"
         for relay in relays_dns_list
     ]
 

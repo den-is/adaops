@@ -69,15 +69,15 @@ def build_tx(
     elif not era_arg:
         era_arg = ""
 
-    tx_in_args = " ".join(["--tx-in {}".format(utxo) for utxo in tx_in_list])
+    tx_in_args = " ".join([f"--tx-in {utxo}" for utxo in tx_in_list])
 
-    tx_out_args = " ".join(["--tx-out {}".format(tx_out_dst) for tx_out_dst in tx_out_list])
+    tx_out_args = " ".join([f"--tx-out {tx_out_dst}" for tx_out_dst in tx_out_list])
 
     if certs is None:
         certs_args = ""
     elif isinstance(certs, list):
         if len(certs) > 0:
-            certs_args = " ".join(["--certificate-file {}".format(cert) for cert in certs])
+            certs_args = " ".join([f"--certificate-file {cert}" for cert in certs])
     else:
         logger.error('"certs" argument should be a list. Received: %s', certs)
         logger.error("Exiting")
@@ -296,7 +296,7 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
     _protocol_fpath = check_file_exists(protocol_fpath)
 
     protocol_params = {}
-    with open(_protocol_fpath, "r") as params_json_f:
+    with open(_protocol_fpath) as params_json_f:
         protocol_params = json.load(params_json_f)
 
     # chain constants, based on the specifications: https://hydra.iohk.io/build/5949624/download/1/shelley-ma.pdf
@@ -397,9 +397,7 @@ def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", cwd=None):
     Runs on air-gapped offline machine. All signing and cert generation happens on offline machine
     """
 
-    signing_keys_args = " ".join(
-        ["--signing-key-file {}".format(skey) for skey in signing_keys_list]
-    )
+    signing_keys_args = " ".join([f"--signing-key-file {skey}" for skey in signing_keys_list])
 
     args = [
         "transaction",

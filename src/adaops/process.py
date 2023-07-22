@@ -21,7 +21,7 @@ def check_cardano_node_proc(proc_name="cardano-node"):
                 key_without_val = None
                 for i in proc.cmdline():
                     if i.startswith("--"):
-                        key_without_val = i.lstrip("--")
+                        key_without_val = i.removeprefix("--")
                         CARDANO_NODE_ARGS.setdefault(key_without_val, "na")
                     elif not i.startswith("--") and key_without_val:
                         CARDANO_NODE_ARGS[key_without_val] = i.strip()
