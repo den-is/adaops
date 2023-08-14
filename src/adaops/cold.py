@@ -155,7 +155,7 @@ def kes_period_info(node_op_cert):
 
     with NamedTemporaryFile() as tmpf:
         tmp_file_dst = tmpf.name
-        print(tmp_file_dst)
+        logger.debug("KES info output dst temp file: %s", tmp_file_dst)
 
         args = [
             "query",
