@@ -2,6 +2,9 @@ import logging
 import sys
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
+
+from icalendar import Calendar, Event
 
 from adaops.var import get_current_tip
 
@@ -168,3 +171,50 @@ def kes_expiration_sec(remaining_kes_periods, genesis_data, network="--mainnet")
         "seconds_remaining": remaining_seconds,
         "expiration_timestamp": kes_ekpiration_timestamp,
     }
+
+
+def generate_epochs_calendar(
+    start_epoch,
+    end_epoch,
+    genesis_data,
+    RFC5545_prodid,
+    dst="cardano_calendar.ics",
+    RFC5545_version="2.0",
+):
+    """Generates calendar file, with list of new cardano epoch events.
+    Dates are in UTC timezone.
+
+    Returns Path object of a destination file.
+
+    Args:
+        start_epoch - int. First epoch in range to start with. Example 390
+        end_epoch   - int. Last epoch to end range with. Excluded from range. Example 1000
+        dst         - str. Resulting file destination "cardano_calendar.ics"
+        genesis_data - map. Python map representing Shelley genesis data.
+                       Usually loaded from genesis JSON file
+        RFC5545_prodid - Calendar prodid. More info bellow.
+        RFC5545_version - Calendar version. More info bellow. Keep it as "2.0".
+                          Don't change if not asked by RFC or icalendar lib.
+
+    Requires calendar PRODID and Version string values as by RFC5545 https://datatracker.ietf.org/doc/html/rfc5545:
+        RFC5545_prodid = "-//My calendar//example.com//
+        RFC5545_version = "2.0" - Don't change it.
+
+    Requires shelley genesis config:
+        with open("/opt/cardano/configs/shelley-genesis.json") as shelley_file:
+            genesis_data = json.load(shelley_file)
+    """
+    cal = Calendar()
+    cal.add("prodid", RFC5545_prodid)
+    cal.add("version", RFC5545_version)
+
+    for epoch in range(start_epoch, end_epoch):
+        event = Event()
+        event.add("summary", f"{epoch} - cardano epoch")
+        event.add("dtstart", calculate_epoch_date(epoch, genesis_data))
+        cal.add_component(event)
+
+    dst_file = Path(dst)
+    dst_file.write_bytes(cal.to_ical())
+
+    return dst_file

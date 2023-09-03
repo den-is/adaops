@@ -19,7 +19,8 @@ classifiers = [
 ]
 dependencies = [
     "psutil",
-    "python-dotenv"
+    "python-dotenv",
+    "icalendar"
 ]
 dynamic = ["version", "readme"]
 
