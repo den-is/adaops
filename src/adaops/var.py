@@ -277,7 +277,16 @@ def get_stake_rewards(stake_addr):
 def get_current_tip(item="slot", retries=3, return_json=False):
     """Get current tip's slot of the blockchain
     By default return current slot.
-    Possible options: 'all', 'slot', 'epoch', 'syncProgress', 'block', 'hash', 'era'
+    Possible "item" options:
+    - 'all'
+    - 'slot'
+    - 'epoch'
+    - 'syncProgress'
+    - 'block'
+    - 'hash'
+    - 'era'
+    - 'slotInEpoch'
+    - 'slotsToEpochEnd'
     return_json - return JSON string. default False
 
     Runs on online machine.
@@ -303,7 +312,7 @@ def get_current_tip(item="slot", retries=3, return_json=False):
                 time.sleep(3)
                 continue
             else:
-                logger.error("Fatal error was:", result["stderr"])
+                logger.error("Fatal error was: %s", result["stderr"])
                 logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
                 sys.exit(1)
         else:
