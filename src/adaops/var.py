@@ -45,7 +45,7 @@ def cmd_str_cleanup(s):
     if isinstance(s, list):
         s = " ".join(s)
 
-    s = s.lstrip("sh -c ")
+    s = s.removeprefix("sh -c ")
 
     no_newl = s.replace("\n", "")
     regex = re.compile(r"\s+", re.MULTILINE)
@@ -306,13 +306,25 @@ def get_current_tip(item="slot", retries=3, return_json=False):
 
         if result["rc"] != 0:
             logger.warning("Was not able to get the current tip")
-            if result["stderr"].startswith("MuxError"):
-                logger.warning("Got not fatal error: %s", result["stderr"])
+            err_msg = result["stderr"].strip()
+            if err_msg.startswith("MuxError"):
+                logger.warning("Got not fatal error: %s", err_msg)
                 logger.warning("Going to retry after 3 seconds")
                 time.sleep(3)
                 continue
+            elif (
+                err_msg
+                == "cardano-cli: Network.Socket.connect: <socket: 11>: does not exist (Connection refused)"
+            ):
+                # NOTE: actually several other online commands might throw this error if node is offline
+                # need to centralize that somehow for online commands
+                # move that loging into wrapper.run?
+                logger.error("cardano-node is OFFLINE or the service LOADING is in the progress")
+                logger.error("Fatal error was: %s", err_msg)
+                logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
+                sys.exit(1)
             else:
-                logger.error("Fatal error was: %s", result["stderr"])
+                logger.error("Fatal error was: %s", err_msg)
                 logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
                 sys.exit(1)
         else:
