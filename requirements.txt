@@ -1,3 +1,4 @@
+setuptools>=61
 psutil
 python-dotenv
 icalendar
