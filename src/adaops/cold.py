@@ -1,9 +1,9 @@
 import json
 import logging
-import sys
 from tempfile import NamedTemporaryFile
 
 from adaops import NET_ARG, cardano_cli
+from adaops.exceptions import BadCmd
 from adaops.var import check_file_exists, cmd_str_cleanup
 
 logger = logging.getLogger(__name__)
@@ -12,9 +12,13 @@ logger = logging.getLogger(__name__)
 def generate_node_cold_keys(name_prefix="cold", cwd=None):
     """Generates Cold/Node key pair
 
-    Returns tuple of two keys and counter
-
     Runs on air-gapped offline node
+
+    Returns:
+        Tuple of three paths to cold keys: (cold.vkey, cold.skey, cold.counter)
+
+    Raises:
+        BadCmd: Was not able to generate node's Cold key pair
     """
 
     args = [
@@ -34,7 +38,7 @@ def generate_node_cold_keys(name_prefix="cold", cwd=None):
         logger.error("Was not able to generate node's Cold key pair")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to generate node's Cold key pair", cmd=result["cmd"])
 
     return (
         f"{cwd}/{name_prefix}.vkey",
@@ -49,15 +53,19 @@ def generate_counter_file(counter_value, node_vkey, name_prefix="cold", cwd=None
     Returns path to a new counter file
 
     Runs on air-gapped offline node
+
+    Raises:
+        BadCmd: Was not able to generate new counter file
+        ValueError: counter_value should be a positive integer
     """
 
     if isinstance(counter_value, int):
         if counter_value <= 0:
             logger.error("counter_value should be a positive integer. Got: '%s'", counter_value)
-            sys.exit(1)
+            raise ValueError(f"counter_value should be a positive integer. Got: '{counter_value}'")
     else:
         logger.error("counter_value should be a positive integer. Got: '%s'", counter_value)
-        sys.exit(1)
+        raise ValueError(f"counter_value should be a positive integer. Got: '{counter_value}'")
 
     check_file_exists(node_vkey)
 
@@ -78,7 +86,7 @@ def generate_counter_file(counter_value, node_vkey, name_prefix="cold", cwd=None
         logger.error("Was not able to generate new counter file")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to generate new counter file", cmd=result["cmd"])
 
     return f"{cwd}/{name_prefix}.counter"
 
@@ -87,7 +95,12 @@ def generate_node_vrf_keys(name_prefix="vrf", cwd=None):
     """Generates VRF key pair
 
     Runs on air-gapped offline node
-    returns tuple of two keys
+
+    Returns:
+        Tuple of two paths to VRF keys: (vrf.vkey, vrf.skey)
+
+    Raises:
+        BadCmd: Was not able to generate node's VRF key pair
     """
 
     args = [
@@ -105,7 +118,7 @@ def generate_node_vrf_keys(name_prefix="vrf", cwd=None):
         logger.error("Was not able to generate node's VRF key pair")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to generate node's VRF key pair", cmd=result["cmd"])
 
     return (f"{cwd}/{name_prefix}.vkey", f"{cwd}/{name_prefix}.skey")
 
@@ -116,7 +129,12 @@ def generate_node_kes_keys(name_prefix="kes", cwd=None):
     Don't forget to reginerate it every 90 days (calculate actual expiration based on genesis file)
 
     Runs on air-gapped offline node
-    returns tuple of two keys
+
+    Returns:
+        Tuple of two paths to KES keys: (kes.vkey, kes.skey)
+
+    Raises:
+        BadCmd: Was not able to generate node's KES key pair
     """
 
     args = [
@@ -134,18 +152,23 @@ def generate_node_kes_keys(name_prefix="kes", cwd=None):
         logger.error("Was not able to generate node's KES key pair")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to generate node's KES key pair", cmd=result["cmd"])
 
     return (f"{cwd}/{name_prefix}.vkey", f"{cwd}/{name_prefix}.skey")
 
 
 def kes_period_info(node_op_cert):
     """Retrieve KES information from a node Op cert.
-    Returns python dict
 
     Works only for cardano-cli >=1.35.3
     cardano-cli <=1.34.1 returns wrong data
     https://github.com/input-output-hk/cardano-node/issues/3689
+
+    Returns:
+        Dictionary with KES info
+
+    Raises:
+        BadCmd: Was not able to get KES info for the node OP cert
     """
 
     check_file_exists(node_op_cert)
@@ -177,6 +200,8 @@ def kes_period_info(node_op_cert):
         logger.error(f"Was not able to get KES info for the node OP cert: {node_op_cert}")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd(
+            f"Was not able to get KES info for the node OP cert: {node_op_cert}", cmd=result["cmd"]
+        )
 
     return kesdata

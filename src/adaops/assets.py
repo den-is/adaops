@@ -1,7 +1,7 @@
 import logging
-import sys
 
 from adaops import cardano_cli
+from adaops.exceptions import BadCmd
 from adaops.var import check_file_exists, cmd_str_cleanup
 
 logger = logging.getLogger(__name__)
@@ -22,6 +22,9 @@ def generate_addr_keys(fname="policy", cwd=None):
                 "skey": f"{cwd}/{fname}.skey",
                 "vkey": f"{cwd}/{fname}.vkey",
             }
+
+    Raises:
+        BadCmd: Was not able to generate policy crypto pair
     """
 
     args = [
@@ -39,7 +42,7 @@ def generate_addr_keys(fname="policy", cwd=None):
         logger.error("Was not able to generate policy crypto pair")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to generate policy crypto pair", cmd=result["cmd"])
 
     return {
         "skey": f"{cwd}/{fname}.skey",
@@ -55,6 +58,9 @@ def get_key_hash(key_path):
 
     Returns:
         hash - string
+
+    Raises:
+        BadCmd: Was not able to get {key_path} key hash
     """
     _key_file = check_file_exists(key_path)
 
@@ -68,10 +74,10 @@ def get_key_hash(key_path):
     result = cardano_cli.run(*args)
 
     if result["rc"] != 0:
-        logger.error("Was not able to get {key_path} key hash")
+        logger.error(f"Was not able to get {key_path} key hash")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd(f"Was not able to get {key_path} key hash", cmd=result["cmd"])
 
     key_hash = result["stdout"].strip()
     return key_hash
@@ -86,6 +92,9 @@ def get_policy_id(policy_file):
 
     Returns:
         policy_id (str)
+
+    Raises:
+        BadCmd: Was not able to generate policy crypto pair
     """
 
     _policy_file = check_file_exists(policy_file)
@@ -103,7 +112,7 @@ def get_policy_id(policy_file):
         logger.error("Was not able to generate policy crypto pair")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to generate policy crypto pair", cmd=result["cmd"])
 
     policy_id = result["stdout"].strip()
 
@@ -111,7 +120,7 @@ def get_policy_id(policy_file):
 
 
 def find_asset_utxo(utxos_json, asset_name, policy_id=None):
-    """Return tuple of UTXO(s) that hold specified asset_name
+    """Return tuple of UTXO(s) that holds specified asset_name
 
     Works with cardano-node>=1.32.1 and asset names that are hex encoded.
     Balance_json is returned by cardano-cli>1.32.1 and has token names hex encoded.

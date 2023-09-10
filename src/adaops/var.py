@@ -5,7 +5,6 @@ import math
 import os
 import re
 import shutil
-import sys
 import time
 import urllib.request
 from binascii import hexlify, unhexlify
@@ -13,6 +12,7 @@ from json import JSONDecodeError
 from pathlib import Path
 
 from adaops import NET_ARG, cardano_cli
+from adaops.exceptions import BadCmd, NodeDown
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,9 @@ def check_file_exists(fpath):
         resolved: extended path to a file that is checked
 
         Exits with 1 if "FileNotFoundError" exception is raised
+
+    Raises:
+        FileNotFoundError: If file does not exist
     """
 
     this_f = Path(fpath)
@@ -36,7 +39,7 @@ def check_file_exists(fpath):
         return resolved
     except FileNotFoundError:
         logger.error("File doesn not exist: %s", fpath)
-        sys.exit(1)
+        raise
 
 
 def cmd_str_cleanup(s):
@@ -55,24 +58,34 @@ def cmd_str_cleanup(s):
 def check_socket_env_var():
     """Checks if CARDANO_NODE_SOCKET_PATH env var is set and indicated file exists.
 
+    Existing socket file does not mean that cardano-node is running and fully synced.
+
     Required for running "online" commands that will query the network.
     For example to query address balance or network tip.
+
+    Raises:
+        RuntimeError: If CARDANO_NODE_SOCKET_PATH env var is not set or file does not exist
+        RuntimeError: If CARDANO_NODE_SOCKET_PATH is set, but file does not exist
     """
 
     socket_path_val = os.getenv("CARDANO_NODE_SOCKET_PATH")
     if not socket_path_val:
-        logger.error("CARDANO_NODE_SOCKET_PATH is absent or has no value assigned")
+        logger.error("CARDANO_NODE_SOCKET_PATH ENV variable is absent or has no value assigned")
         logger.error(
             "Make sure that you are running on a machine with an active and fully synced cardano-node process"
         )
-        sys.exit(1)
+        raise RuntimeError(
+            "CARDANO_NODE_SOCKET_PATH ENV variable is absent or has no value assigned"
+        )
 
     if socket_path_val:
         if not Path(socket_path_val).exists():
             logger.error(
                 "CARDANO_NODE_SOCKET_PATH is set, but file does not exist: %s", socket_path_val
             )
-            sys.exit(1)
+            raise RuntimeError(
+                f"CARDANO_NODE_SOCKET_PATH is set, but file does not exist: {socket_path_val}"
+            )
 
     return True
 
@@ -96,6 +109,9 @@ def get_protocol_params():
     """Get protocol parameters
 
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
+
+    Raises:
+        RuntimeError: If was not able to get/parse protocol parameters
     """
 
     check_socket_env_var()
@@ -108,9 +124,9 @@ def get_protocol_params():
         params = json.loads(result["stdout"])
         return params
 
-    except (JSONDecodeError, ValueError):
+    except (JSONDecodeError, ValueError) as err:
         logger.error("Was not able to get/parse protocol parameters", exc_info=1)
-        sys.exit(1)
+        raise RuntimeError("Was not able to get/parse protocol parameters") from err
 
 
 def l2a(lovelace):
@@ -159,14 +175,18 @@ def get_balances(address, user_utxo=None):
     Returns tuple of hashes and their balances
 
     Example output:
-    {'utxo_hash1#1': {'lovelace': 1000000000},
-     'utxo_hash2#0': {'lovelace': 979279256,
-                      'tokens': {'policy_id_1': {'SecondTesttoken': 9995000,
-                                                 'Testtoken': 9999996
-                                                }
-                                }
-                     }
-    }
+        {'utxo_hash1#1': {'lovelace': 1000000000},
+        'utxo_hash2#0': {'lovelace': 979279256,
+                        'tokens': {'policy_id_1': {'SecondTesttoken': 9995000,
+                                                    'Testtoken': 9999996
+                                                    }
+                                    }
+                        }
+        }
+
+    Raises:
+        BadCmd: If was not able to get address balances
+        ValueError: If was not able to parse address balances JSON
     """
 
     check_socket_env_var()
@@ -187,13 +207,13 @@ def get_balances(address, user_utxo=None):
         logger.error("Not able to get address balances")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to get address balances", cmd=cmd_str_cleanup(result["cmd"]))
 
     try:
         address_balances_json = json.loads(result["stdout"])
-    except (JSONDecodeError, ValueError):
+    except (JSONDecodeError, ValueError) as err:
         logger.error("Not able to parse address balances JSON", exc_info=1)
-        sys.exit(1)
+        raise ValueError("Not able to parse address balances JSON") from err
 
     output = {}
 
@@ -244,6 +264,10 @@ def get_stake_rewards(stake_addr):
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
+
+    Raises:
+        BadCmd: If was not able to get rewards balance for stake address
+        ValueError: If was not able to parse stake address rewards balance JSON
     """
 
     check_socket_env_var()
@@ -262,14 +286,14 @@ def get_stake_rewards(stake_addr):
         logger.error("Was not able to get rewards balance for stake address")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to get rewards balance for stake address", cmd=result["cmd"])
 
     try:
         balances_json = json.loads(result["stdout"])
-    except (ValueError, JSONDecodeError):
+    except (ValueError, JSONDecodeError) as err:
         logger.error("Not able to parse stake address rewards balance JSON:", exc_info=1)
         logger.error(result["stdout"])
-        sys.exit(1)
+        raise ValueError("Not able to parse stake address rewards balance JSON") from err
 
     return balances_json
 
@@ -291,6 +315,11 @@ def get_current_tip(item="slot", retries=3, return_json=False):
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH env var required
+
+    Raises:
+        NodeDown: cardano-node is OFFLINE or the service LOADING is in the progress
+        BadCmd: If was not able to get the current tip
+        KeyError: If requested item is not available
     """
 
     args = ["query", "tip", *NET_ARG]
@@ -318,32 +347,32 @@ def get_current_tip(item="slot", retries=3, return_json=False):
             ):
                 # NOTE: actually several other online commands might throw this error if node is offline
                 # need to centralize that somehow for online commands
-                # move that loging into wrapper.run?
+                # move that test and loging into wrapper.run?
                 logger.error("cardano-node is OFFLINE or the service LOADING is in the progress")
                 logger.error("Fatal error was: %s", err_msg)
-                logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-                sys.exit(1)
+                raise NodeDown
             else:
                 logger.error("Fatal error was: %s", err_msg)
                 logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-                sys.exit(1)
+                raise BadCmd("Was not able to get the current tip", cmd=result["cmd"])
         else:
             exec_success = True
 
     response_dict = json.loads(result["stdout"])
-    response_keys = list(response_dict.keys())
-    response_keys.append("all")
-    if item not in response_keys:
-        items = ", ".join(response_keys)
-        logger.error(
-            'Item "%s" is not available. Available list of items: %s. Exiting.', item, items
-        )
-        sys.exit(1)
 
-    if item != "all":
-        current_tip_item = response_dict[item]
-    else:
-        current_tip_item = response_dict
+    try:
+        if item == "all":
+            current_tip_item = response_dict
+        else:
+            current_tip_item = response_dict[item]
+    except KeyError:
+        response_keys = list(response_dict.keys())
+        logger.error(
+            'Item "%s" is not available. Available list of items: %s. Exiting.',
+            item,
+            ", ".join(["all", *response_keys]),
+        )
+        raise
 
     if return_json:
         return json.dumps(current_tip_item)
@@ -389,13 +418,24 @@ def expected_slot(genesis_data, byron_genesis_data):
 
 
 def get_metadata_hash(metadata_f, cwd=None):
+    """Generates hash for pool's metadata JSON file.
+
+    Raises:
+        RuntimeError: Was not able to find pool metadata in file
+        ValueError: Ticker does not match patter: 3-5 chars long, A-Z and 0-9 characters only
+        ValueError: Pool description field value exceeds 255 characters
+        BadCmd: Was not able to generate hash for pool's metadata
+    """
+
     metadata_json = {}
-    with open(metadata_f) as json_file:
+
+    checked_file = check_file_exists(metadata_f)
+    with open(checked_file) as json_file:
         metadata_json = json.load(json_file)
 
     if not metadata_json:
         logger.error("Was not able to find pool metadata in file: %s", metadata_f)
-        sys.exit(1)
+        raise RuntimeError("Was not able to find pool metadata in file.")
 
     ticker_re = re.compile(r"^([A-Z0-9]){3,5}$")
     re_check = ticker_re.search(metadata_json["ticker"])
@@ -404,14 +444,18 @@ def get_metadata_hash(metadata_f, cwd=None):
             "Ticker does not match patter: 3-5 chars long, A-Z and 0-9 characters only. Got %s",
             metadata_json["ticker"],
         )
-        sys.exit(1)
+        raise ValueError(
+            f"Ticker does not match patter: 3-5 chars long, A-Z and 0-9 characters only. Got {metadata_json['ticker']}"
+        )
 
     if len(metadata_json["description"]) > 255:
         logger.error(
             "Pool description field value exceeds 255 characters. Length: %d",
             len(metadata_json["description"]),
         )
-        sys.exit(1)
+        raise ValueError(
+            f"Pool description field value exceeds 255 characters. Length: {len(metadata_json['description'])}"
+        )
 
     args = [
         "stake-pool",
@@ -426,7 +470,7 @@ def get_metadata_hash(metadata_f, cwd=None):
         logger.error("Was not able to generate hash for pool's metadata")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to generate hash for pool's metadata", cmd=result["cmd"])
 
     pool_metadata_hash = result["stdout"].strip()
 
@@ -438,6 +482,9 @@ def download_meta(meta_url, dst_path):
 
     Actually that can be URL to whatever valid JSON file.
     Not strictly checking Cardano metadata schema.
+
+    Raises:
+        ValueError: Downloaded file is not a valid JSON file.
     """
     file_dst = Path(dst_path)
 
@@ -448,16 +495,11 @@ def download_meta(meta_url, dst_path):
     with urllib.request.urlopen(meta_url) as response, open(file_dst, "wb") as out_file:
         shutil.copyfileobj(response, out_file)
 
-    valid_json_file = False
     with open(file_dst) as meta_f:
         try:
-            json.load(meta_f)
-            valid_json_file = True
-        except ValueError:
+            _ = json.load(meta_f)
+        except ValueError as err:
             logger.error("Downloaded file is not a valid JSON file.", exc_info=1)
-
-    if not valid_json_file:
-        logger.error("Got invalid JSON file. Exiting")
-        sys.exit(1)
+            raise ValueError("Downloaded file is not a valid JSON file.") from err
 
     return file_dst

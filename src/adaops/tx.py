@@ -1,11 +1,11 @@
 import json
 import logging
 import math
-import sys
 import time
 from timeit import default_timer as timer
 
 from adaops import NET_ARG, cardano_cli
+from adaops.exceptions import BadCmd
 from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup, get_balances
 
 logger = logging.getLogger(__name__)
@@ -36,15 +36,26 @@ def build_tx(
     - Withdrawing staking rewards from a stake address.
     - Registering certificates on the blockchain.
 
-    tx_in_list  - list of input transaction hashes with index. list of strings.
-                  string format: "tx_hash#tx_idx"
-    tx_out_list - list of output/destination addresses. string format: "address+amount"
-    withdrawal  - string. if provided should be in form "stake_addr+withdrawal_amount"
-    certs - certificates to include and register on blockchain.
-            should be list of strings representing full path to certificates.
-    output_fname - convention used in many examples:
-                    "tx.draft" for a transaction draft
-                    "tx.raw" for the actual transaction.
+    Args:
+        tx_in_list  - list of input transaction hashes with index. list of strings.
+                    string format: "tx_hash#tx_idx"
+        tx_out_list - list of output/destination addresses. string format: "address+amount"
+        withdrawal  - string. if provided should be in form "stake_addr+withdrawal_amount"
+        certs - certificates to include and register on blockchain.
+                should be list of strings representing full path to certificates.
+        output_fname - convention used in many examples:
+                        "tx.draft" for a transaction draft
+                        "tx.raw" for the actual transaction.
+
+    Returns:
+        path to transaction file (str)
+
+    Raises:
+        ValueError: Selected era argument is not in the list of available era arguments
+        ValueError: "certs" argument should be a list.
+        RuntimeError: Got "mint" string, but minting-script-file is missing. Both are required.
+        RuntimeError: Got "minting_script_file", but not a "mint"string . Both are required.
+        BadCmd: Was not able to build Transaction File
     """
 
     eras_args = [
@@ -64,8 +75,9 @@ def build_tx(
             era_arg,
             eras_args,
         )
-        logger.error("Exiting")
-        sys.exit(1)
+        raise ValueError(
+            f"Selected era {era_arg} argument is not in the list of available era arguments: {eras_args}"
+        )
     elif not era_arg:
         era_arg = ""
 
@@ -80,8 +92,7 @@ def build_tx(
             certs_args = " ".join([f"--certificate-file {cert}" for cert in certs])
     else:
         logger.error('"certs" argument should be a list. Received: %s', certs)
-        logger.error("Exiting")
-        sys.exit(1)
+        raise ValueError('"certs" argument should be a list.')
 
     withdrawal_args = ""
     if withdrawal:
@@ -104,15 +115,15 @@ def build_tx(
         check_file_exists(minting_script_file)
         minting_args = f'--mint="{mint}" --minting-script-file {minting_script_file}'
     elif mint and not minting_script_file:
-        logger.error(
-            'Got "mint" string, but minting-script-file is missing. Both are required. Exiting.'
+        logger.error('Got "mint" string, but minting-script-file is missing. Both are required.')
+        raise RuntimeError(
+            'Got "mint" string, but minting-script-file is missing. Both are required.'
         )
-        sys.exit(1)
     elif minting_script_file and not mint:
-        logger.error(
-            'Got "minting_script_file", but not a "mint"string . Both are required. Exiting.'
+        logger.error('Got "minting_script_file", but not a "mint"string . Both are required.')
+        raise RuntimeError(
+            'Got "minting_script_file", but not a "mint"string . Both are required.'
         )
-        sys.exit(1)
 
     metadata_json_file_arg = ""
     if metadata_file:
@@ -156,7 +167,7 @@ def build_tx(
             logger.error("Was not able to build Raw Transaction")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to build Transaction File", cmd=result["cmd"])
 
     return f"{cwd}/{output_fname}"
 
@@ -173,11 +184,17 @@ def get_tx_fee(
     """Witnesses are the number of keys that will be signing the transaction.
     Runs on online node.
 
+    Returns:
+        int - transaction fee in Lovelaces
+
+    Raises:
+        BadCmd: Was not able to calculate a transaction fee
+
     Examples:
-    - at least payment.skey - usual transaction
-    - cold.skey stake.skey payment.skey - pool registration
-    - cold.skey payment.skey - pool deregisratoin
-    - payment.skey stake.skey - stake address registration
+        - at least payment.skey - usual transaction
+        - cold.skey stake.skey payment.skey - pool registration
+        - cold.skey payment.skey - pool deregisratoin
+        - payment.skey stake.skey - stake address registration
     """
 
     check_socket_env_var()
@@ -204,10 +221,10 @@ def get_tx_fee(
     result = cardano_cli.run(*args, cwd=cwd)
 
     if result["rc"] != 0:
-        logger.error("Was not able to calculate fees")
+        logger.error("Was not able to calculate a transaction fee")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to calculate a transaction fee", cmd=result["cmd"])
 
     tx_fee_lovelace = int(result["stdout"].split(" ")[0])
 
@@ -217,14 +234,20 @@ def get_tx_fee(
 def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
     """Calculates minimum required UTXO amount in tx_out to send with assets
     Since Alonzo era.
-    Returns int Lovelaces.
 
-    tx_out - actual real tx_out string
-        single asset: receiver_addr+receiver_ada+"1 policyid.tokenname"
-        multi asset: receiver_addr+receiver_ada+"1 policyid.tokenname1 + 1 policyid.tokenname2"
-        receiver_addr and receiver_ada ara not important and can be some draft values
+    Args:
+        tx_out - actual real tx_out string
+            single asset: receiver_addr+receiver_ada+"1 policyid.tokenname"
+            multi asset: receiver_addr+receiver_ada+"1 policyid.tokenname1 + 1 policyid.tokenname2"
+            receiver_addr and receiver_ada ara not important and can be some draft values
+        protocol_fpath - path to protocol parameters JSON file
 
-    protocol_fpath - path to protocol parameters JSON file
+    Returns:
+        int - minimum required UTXO amount in Lovelaces
+
+    Raises:
+        ValueError: Selected era argument is not in the list of available era arguments
+        BadCmd: Was not able to calculate minimum required UTXO amount for assets transaction
     """
 
     _protocol_fpath = check_file_exists(protocol_fpath)
@@ -246,8 +269,9 @@ def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
             era_arg,
             eras_args,
         )
-        logger.error("Exiting")
-        sys.exit(1)
+        raise ValueError(
+            f"Selected era {era_arg} argument is not in the list of available era arguments: {eras_args}"
+        )
     elif not era_arg:
         era_arg = ""
 
@@ -270,7 +294,9 @@ def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
         )
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd(
+            "Was not able to calculate minimum required UTXO amount for assets transaction"
+        )
 
     tx_fee_lovelace = int(result["stdout"].split(" ")[1])
 
@@ -388,13 +414,19 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
 def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", cwd=None):
     """Witnesses are the number of keys that will be signing the transaction.
 
-    Examples:
-    - at least "payment.skey" - usual transaction
-    - "payment.skey", "stake.skey" - stake address registration
-    - "cold.skey", "stake.skey", "payment.skey" - pool registration
-    - "cold.skey", "payment.skey" - pool deregisration
-
     Runs on air-gapped offline machine. All signing and cert generation happens on offline machine
+
+    Returns:
+        path to signed transaction file (str)
+
+    Raises:
+        BadCmd: Signing TX did not work.
+
+    Examples:
+        - at least "payment.skey" - usual transaction
+        - "payment.skey", "stake.skey" - stake address registration
+        - "cold.skey", "stake.skey", "payment.skey" - pool registration
+        - "cold.skey", "payment.skey" - pool deregisration
     """
 
     signing_keys_args = " ".join([f"--signing-key-file {skey}" for skey in signing_keys_list])
@@ -416,7 +448,7 @@ def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", cwd=None):
         logger.error("Signing TX did not work.")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Signing TX did not work.", cmd=result["cmd"])
 
     return f"{cwd}/{output_fname}"
 
@@ -424,8 +456,14 @@ def sign_tx(tx_file, signing_keys_list, output_fname="tx.signed", cwd=None):
 def submit_tx(signed_tx_f="tx.signed", cwd=None):
     """Submitting signed transaction to blockchain
 
-    requires CARDANO_NODE_SOCKET env variable
-    should run on online machine
+    Requires CARDANO_NODE_SOCKET env variable
+    Should run on online machine
+
+    Returns:
+        True if transaction was submitted successfully
+
+    Raises:
+        BadCmd: Submiting TX did not work.
     """
 
     check_socket_env_var()
@@ -445,7 +483,7 @@ def submit_tx(signed_tx_f="tx.signed", cwd=None):
         logger.error("Submiting TX did not work.")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Submiting TX did not work.", cmd=result["cmd"])
 
     tx_id = get_tx_id(signed_tx_f)
     logger.info("Successfully submitted transaction %s", tx_id)
@@ -459,11 +497,18 @@ def get_tx_id(tx_file=None, tx_body_file=None):
     One of two inputs is required.
     tx_body_file - raw transaction draft file, unsigned
     tx_file - signed transaction file. Has priority if both files provided.
+
+    Returns:
+        tx_id (string)
+
+    Raises:
+        RuntimeError: Either 'tx_file' or 'tx_body_file' should be provided. None provided
+        BadCmd: Was not able to get transaction ID
     """
 
     if not tx_file and not tx_body_file:
         logger.error("Either 'tx_file' or 'tx_body_file' should be provided. None provided")
-        sys.exit(1)
+        raise RuntimeError("Either 'tx_file' or 'tx_body_file' should be provided. None provided")
 
     if tx_body_file and not tx_file:
         check_file_exists(tx_body_file)
@@ -478,7 +523,7 @@ def get_tx_id(tx_file=None, tx_body_file=None):
         logger.error("Was not able to get transaction ID")
         logger.error(result["stderr"].strip())
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to get transaction ID", cmd=result["cmd"])
 
     tx_id = result["stdout"].strip()
 
@@ -494,11 +539,15 @@ def view_tx_info(tx_file=None, tx_body_file=None):
 
     Returns:
         output (string)
+
+    Raises:
+        RuntimeError: Either 'tx_file' or 'tx_body_file' should be provided. None provided
+        BadCmd: Was not able to get transaction info
     """
 
     if not tx_file and not tx_body_file:
         logger.error("Either 'tx_file' or 'tx_body_file' should be provided. None provided")
-        sys.exit(1)
+        raise RuntimeError("Either 'tx_file' or 'tx_body_file' should be provided. None provided")
 
     if tx_body_file and not tx_file:
         check_file_exists(tx_body_file)
@@ -513,7 +562,7 @@ def view_tx_info(tx_file=None, tx_body_file=None):
         logger.error("Was not able to get transaction info")
         logger.error(result["stderr"].strip())
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        BadCmd("Was not able to get transaction info", cmd=result["cmd"])
 
     output = result["stdout"].strip()
 

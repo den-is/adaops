@@ -1,5 +1,4 @@
 import logging
-import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -17,23 +16,26 @@ def calculate_current_epoch(genesis_data):
     Offline method calculates values based on genesis file and system time.
     genesis_data - JSON object containing Shelley genesis data.
 
-    quick reference values:
-    2017-09-23T21:44:51Z - cardano mainnet start date
-    2019-07-24T20:20:16Z - cardano testnet start date
-    432000 - epoch length/duration, in seconds. mainnet and testnet
+    Quick reference values:
+        2017-09-23T21:44:51Z - cardano mainnet start date
+        2019-07-24T20:20:16Z - cardano testnet start date
+        432000 - epoch length/duration, in seconds. mainnet and testnet
 
-    returns epoch - int
+    Returns:
+      epoch - int
+
+    Raises:
+        KeyError: If genesis_data is missing "systemStart" or "epochLength" keys.
     """
-    cardano_start_str = genesis_data.get("systemStart")
-    epoch_len = int(genesis_data.get("epochLength", 0))
-
-    if not cardano_start_str or not epoch_len:
+    try:
+        cardano_start_str = genesis_data["systemStart"]
+        epoch_len = int(genesis_data["epochLength"])
+    except KeyError as err:
         logger.error(
             'Not able to find "systemStart" or "epochLength" in genesis data. '
             "Make sure you have passed correct genesis file."
         )
-
-        sys.exit(1)
+        raise KeyError('Genesis file is missing "systemStart" or "epochLength" keys') from err
 
     now = datetime.utcnow()
     cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
@@ -49,27 +51,31 @@ def time_in_epoch(genesis_data):
     Offline method calculates values based on genesis file and system time.
     genesis_data - JSON object containing Shelley genesis data.
 
-    quick reference values:
-    2017-09-23T21:44:51Z - cardano mainnet start date
-    2019-07-24T20:20:16Z - cardano testnet start date
-    432000 - epoch length/duration, in seconds. mainnet and testnet
+    Quick reference values:
+        2017-09-23T21:44:51Z - cardano mainnet start date
+        2019-07-24T20:20:16Z - cardano testnet start date
+        432000 - epoch length/duration, in seconds. mainnet and testnet
 
     Examples:
         To calculate full days in epoch, i.e. to determine first or last days:
             int(time_in_epoch() / 86400 ) % 5
 
-    returns:
-    seconds - float, rounded to 1 digit after period
-    """
-    cardano_start_str = genesis_data.get("systemStart")
-    epoch_len = int(genesis_data.get("epochLength", 0))
+    Returns:
+        seconds - float, rounded to 1 digit after period
 
-    if not cardano_start_str or not epoch_len:
+    Raises:
+        KeyError: If genesis_data is missing "systemStart" or "epochLength" keys.
+    """
+
+    try:
+        cardano_start_str = genesis_data["systemStart"]
+        epoch_len = int(genesis_data["epochLength"])
+    except KeyError as err:
         logger.error(
             'Not able to find "systemStart" or "epochLength" in genesis data. '
             "Make sure you have passed correct genesis file."
         )
-        sys.exit(1)
+        raise KeyError('Genesis file is missing "systemStart" or "epochLength" keys') from err
 
     now = datetime.utcnow()
     cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
@@ -87,18 +93,21 @@ def time_until_next_epoch(genesis_data):
     Offline method calculates values based on genesis file and system time.
     genesis_data - JSON object containing Shelley genesis data.
 
-    returns:
-    seconds - float, rounded to 1 digit after period.
-    """
-    cardano_start_str = genesis_data.get("systemStart")
-    epoch_len = int(genesis_data.get("epochLength", 0))
+    Returns:
+        seconds - float, rounded to 1 digit after period.
 
-    if not cardano_start_str or not epoch_len:
+    Raises:
+        KeyError: If genesis_data is missing "systemStart" or "epochLength" keys.
+    """
+    try:
+        cardano_start_str = genesis_data["systemStart"]
+        epoch_len = int(genesis_data["epochLength"])
+    except KeyError as err:
         logger.error(
             'Not able to find "systemStart" or "epochLength" in genesis data. '
             "Make sure you have passed correct genesis file."
         )
-        sys.exit(1)
+        raise KeyError('Genesis file is missing "systemStart" or "epochLength" keys') from err
 
     now = datetime.utcnow()
     cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
@@ -118,18 +127,21 @@ def calculate_epoch_date(epoch, genesis_data):
     genesis_data - JSON object containing Shelley genesis data.
     epoch - int
 
-    returns:
-    datetime object
-    """
-    cardano_start_str = genesis_data.get("systemStart")
-    epoch_len = int(genesis_data.get("epochLength", 0))
+    Returns:
+        datetime object - epoch date in UTC timezone
 
-    if not cardano_start_str or not epoch_len:
+    Raises:
+        KeyError: If genesis_data is missing "systemStart" or "epochLength" keys.
+    """
+    try:
+        cardano_start_str = genesis_data["systemStart"]
+        epoch_len = int(genesis_data["epochLength"])
+    except KeyError as err:
         logger.error(
             'Not able to find "systemStart" or "epochLength" in genesis data. '
             "Make sure you have passed correct genesis file."
         )
-        sys.exit(1)
+        raise KeyError('Genesis file is missing "systemStart" or "epochLength" keys') from err
 
     cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
 

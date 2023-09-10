@@ -1,7 +1,7 @@
 import logging
-import sys
 
 from adaops import NET_ARG, cardano_cli
+from adaops.exceptions import BadCmd
 from adaops.var import cmd_str_cleanup
 
 logger = logging.getLogger(__name__)
@@ -18,10 +18,17 @@ def generate_node_cert(
     """Generate Node Operational certificate.
     Requires renewal as soon as KES key pair is renewed
 
-    kes_vkey - path to kes.vkey
-    cold_skey - path to cold.skey
-    cold_counter - path to cold.counter
-    kes_period - integer, current KES period
+    Args:
+        kes_vkey - path to kes.vkey
+        cold_skey - path to cold.skey
+        cold_counter - path to cold.counter
+        kes_period - integer, current KES period
+
+    Returns:
+        path to node.cert (str)
+
+    Raises:
+        BadCmd: Was not able to generate node cert
     """
 
     args = [
@@ -45,7 +52,7 @@ def generate_node_cert(
         logger.error("Was not able to generate node cert")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to generate node cert", cmd=result["cmd"])
 
     return f"{cwd}/{output_name}"
 
@@ -54,6 +61,17 @@ def generate_stake_reg_cert(output_name="stake.cert", stake_vkey="stake.vkey", c
     """Generate stake address registration certificate
 
     Runs on an air-gapped offline machine
+
+    Args:
+        output_name - name of the output file
+        stake_vkey - path to stake.vkey
+        cwd - working directory
+
+    Returns:
+        path to stake registration cert file (str)
+
+    Raises:
+        BadCmd: Was not able to create stake registration cert
     """
 
     args = [
@@ -71,7 +89,7 @@ def generate_stake_reg_cert(output_name="stake.cert", stake_vkey="stake.vkey", c
         logger.error("Was not able to create stake registration cert")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to create stake registration cert", cmd=result["cmd"])
 
     return f"{cwd}/{output_name}"
 
@@ -80,6 +98,12 @@ def generate_delegation_cert(output_name, owner_stake_vkey, cold_vkey, cwd=None)
     """Generations stake delegation certificate for the owner
 
     Runs on an air-gapped offline machine
+
+    Returns:
+        path to stake delegation cert file (str)
+
+    Raises:
+        BadCmd: Stake Delegation cert creation didn't work
     """
 
     args = [
@@ -96,10 +120,10 @@ def generate_delegation_cert(output_name, owner_stake_vkey, cold_vkey, cwd=None)
     result = cardano_cli.run(*args, cwd=cwd)
 
     if result["rc"] != 0:
-        logger.error("Owner's Delegation cert creation didn't work")
+        logger.error("Delegation cert creation didn't work")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Delegation cert creation didn't work", cmd=result["cmd"])
 
     return f"{cwd}/{output_name}"
 
@@ -126,9 +150,19 @@ def generate_pool_reg_cert(
 
     All relays should be running on the same port.
 
-    relays_ipv4_list - list of string in format 'pool_ipv4:port'
+    Args:
+        relays_ipv4_list - list of string in format 'pool_ipv4:port'
 
     Runs on an air-gapped offline machine
+
+    Returns:
+        path to pool registration cert file (str)
+
+    Raises:
+        ValueError: metadata_url is longer than 64 characters
+        ValueError: owners_stake_vkeys_list should be a list of strings
+        RuntimeError: Neither relays_dns_list or relays_ipv4_list supplied
+        BadCmd: Pool registration certificate creation didn't work
     """
 
     if relays_ipv4_list is None:
@@ -139,12 +173,15 @@ def generate_pool_reg_cert(
 
     if len(metadata_url) > 64:
         logger.error("Metadata URL is longer than 64 characters: %s", metadata_url)
+        raise ValueError("Metadata URL is longer than 64 characters")
 
     if not isinstance(owners_stake_vkeys_list, list):
         logger.error(
             "owners_stake_vkeys - list of strings with full path to owner stake verification keys"
         )
-        sys.exit(1)
+        raise ValueError(
+            "owners_stake_vkeys - list of strings with full path to owner stake verification keys"
+        )
 
     owners_stake_vkeys_args = " ".join(
         [
@@ -155,7 +192,7 @@ def generate_pool_reg_cert(
 
     if not relays_dns_list and not relays_ipv4_list:
         logger.error("Neither relays_dns_list or relays_ipv4_list supplied")
-        sys.exit(1)
+        raise RuntimeError("Neither relays_dns_list or relays_ipv4_list supplied")
 
     pool_ipv4_relays = [
         f"--pool-relay-ipv4 {relay} --pool-relay-port {relay_port}" for relay in relays_ipv4_list
@@ -202,7 +239,7 @@ def generate_pool_reg_cert(
         logger.error("Pool registration certificate creation didn't work")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Pool registration certificate creation didn't work", cmd=result["cmd"])
 
     return f"{cwd}/{output_fname}"
 
@@ -216,6 +253,12 @@ def generate_deregistration_cert(
     """Generates a pool deregistration certificate required for the pool retirement
 
     Runs on an air-gapped offline machine
+
+    Returns:
+        path to pool deregistration cert file (str)
+
+    Raises:
+        BadCmd: Was not able to create pool deregistration cert
     """
 
     args = [
@@ -235,7 +278,7 @@ def generate_deregistration_cert(
         logger.error("Was not able to create pool deregistration cert")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to create pool deregistration cert", cmd=result["cmd"])
 
     return f"{cwd}/{output_name}"
 
@@ -248,6 +291,12 @@ def generate_stake_dereg_cert(
     """Generates a stake delegation deregistration certificate
 
     Runs on an air-gapped offline machine
+
+    Returns:
+        path to stake delegation deregistration cert file (str)
+
+    Raises:
+        BadCmd: Was not able to create stake address deregistration cert
     """
 
     args = [
@@ -265,6 +314,6 @@ def generate_stake_dereg_cert(
         logger.error("Was not able to create stake address deregistration cert")
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        sys.exit(1)
+        raise BadCmd("Was not able to create stake address deregistration cert", cmd=result["cmd"])
 
     return f"{cwd}/{output_name}"
