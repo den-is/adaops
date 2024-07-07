@@ -52,6 +52,8 @@ profile_default/
 ipython_config.py
 
 # Environments
+.envrc
+.direnv
 .env
 .venv
 env/
