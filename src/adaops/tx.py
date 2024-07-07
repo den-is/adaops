@@ -4,7 +4,7 @@ import math
 import time
 from timeit import default_timer as timer
 
-from adaops import NET_ARG, cardano_cli
+from adaops import LEGACY_ERA_ARG, NET_ARG, cardano_cli
 from adaops.exceptions import BadCmd
 from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup, get_balances
 
@@ -57,29 +57,6 @@ def build_tx(
         RuntimeError: Got "minting_script_file", but not a "mint"string . Both are required.
         BadCmd: Was not able to build Transaction File
     """
-
-    eras_args = [
-        "",
-        None,
-        "--byron-era",
-        "--shelley-era",
-        "--allegra-era",
-        "--mary-era",
-        "--alonzo-era",
-        "--babbage-era",
-    ]
-
-    if era_arg not in eras_args:
-        logger.error(
-            "Selected era %s argument is not in the list of available era arguments: %s",
-            era_arg,
-            eras_args,
-        )
-        raise ValueError(
-            f"Selected era {era_arg} argument is not in the list of available era arguments: {eras_args}"
-        )
-    elif not era_arg:
-        era_arg = ""
 
     tx_in_args = " ".join([f"--tx-in {utxo}" for utxo in tx_in_list])
 
@@ -137,7 +114,7 @@ def build_tx(
             [
                 "transaction",
                 "build-raw",
-                era_arg,
+                LEGACY_ERA_ARG,
                 *tx_in_args.split(" "),
                 *tx_out_args.split(" "),
                 *invalid_hereafter_arg.split(" "),
@@ -252,34 +229,10 @@ def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
 
     _protocol_fpath = check_file_exists(protocol_fpath)
 
-    eras_args = [
-        "",
-        None,
-        "--byron-era",
-        "--shelley-era",
-        "--allegra-era",
-        "--mary-era",
-        "--alonzo-era",
-        "--babbage-era",
-    ]
-
-    if era_arg not in eras_args:
-        logger.error(
-            "Selected era %s argument is not in the list of available era arguments: %s",
-            era_arg,
-            eras_args,
-        )
-        raise ValueError(
-            f"Selected era {era_arg} argument is not in the list of available era arguments: {eras_args}"
-        )
-    elif not era_arg:
-        era_arg = ""
-
     args = [
         "transaction",
         "calculate-min-required-utxo",
-        "calculate-min-required-utxo",
-        era_arg,
+        LEGACY_ERA_ARG,
         "--protocol-params-file",
         _protocol_fpath,
         "--tx-out",
