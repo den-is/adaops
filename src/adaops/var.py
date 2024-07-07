@@ -72,7 +72,7 @@ def check_socket_env_var():
     if not socket_path_val:
         logger.error("CARDANO_NODE_SOCKET_PATH ENV variable is absent or has no value assigned")
         logger.error(
-            "Make sure that you are running on a machine with an active and fully synced cardano-node process"
+            "Make sure that you are running on a machine with an active and fully synced cardano-node process"  # noqa
         )
         raise RuntimeError(
             "CARDANO_NODE_SOCKET_PATH ENV variable is absent or has no value assigned"
@@ -100,7 +100,7 @@ def change_calc(init_balance, *args):
         Pool Retirement certificate registration: init_balance - tx_fee
         Send money to someone and pay fee: init_balance - send_amount_lovelace - tx_fee
         Also helpfull when you want to migrate ALL funds to some address and pay tx fee: init_balance - tx_fee = amount to migrate
-    """
+    """  # noqa
     # TODO: check for negative and not int arguments
     return init_balance - sum([abs(arg) for arg in args])
 
@@ -112,7 +112,7 @@ def get_protocol_params():
 
     Raises:
         RuntimeError: If was not able to get/parse protocol parameters
-    """
+    """  # noqa
 
     check_socket_env_var()
 
@@ -187,7 +187,7 @@ def get_balances(address, user_utxo=None):
     Raises:
         BadCmd: If was not able to get address balances
         ValueError: If was not able to parse address balances JSON
-    """
+    """  # noqa
 
     check_socket_env_var()
 
@@ -222,7 +222,7 @@ def get_balances(address, user_utxo=None):
             )
         elif len(filtered_utxos) > 1:
             logger.warning(
-                "Balances query has returned more than 1 hashes. Probably different indexes of the same utxo."
+                "Balances query has returned more than 1 hashes. Probably different indexes of the same utxo."  # noqa
             )
             logger.warning(
                 "Specify exact hash with index. Available hashes:\n%s", "\n".join(filtered_utxos)
@@ -245,10 +245,28 @@ def get_total_balance(address):
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
-    """
+    """  # noqa
 
     txs = get_balances(address=address)
     return sum([txs[tx]["lovelace"] for tx in txs])
+
+
+def get_utxo_with_enough_balance(utxos_map, amount):
+    """Receives map of UTXos, output from get_balances(addr) and returns singe UTXo with balance more or equal to given amount"""  # noqa
+    utxos = list(utxos_map.keys())
+    utxo = utxos.pop()
+
+    while utxos_map[utxo]["lovelace"] < amount:
+        if not utxos:
+            logger.warn("Provided address has no a single UTXO with enough balance")
+            logger.warn(
+                "You might want to join multiple UTXOs in input-list or try a different address"
+            )
+            return None
+
+        utxo = utxos.pop()
+
+    return utxo
 
 
 def get_stake_rewards(stake_addr):
@@ -260,7 +278,7 @@ def get_stake_rewards(stake_addr):
     Raises:
         BadCmd: If was not able to get rewards balance for stake address
         ValueError: If was not able to parse stake address rewards balance JSON
-    """
+    """  # noqa
 
     check_socket_env_var()
 
@@ -335,9 +353,9 @@ def get_current_tip(item="slot", retries=3, return_json=False):
                 continue
             elif (
                 err_msg
-                == "cardano-cli: Network.Socket.connect: <socket: 11>: does not exist (Connection refused)"
+                == "cardano-cli: Network.Socket.connect: <socket: 11>: does not exist (Connection refused)"  # noqa
             ):
-                # NOTE: actually several other online commands might throw this error if node is offline
+                # NOTE: actually several other online commands might throw this error if node is offline # noqa
                 # need to centralize that somehow for online commands
                 # move that test and loging into wrapper.run?
                 logger.error("cardano-node is OFFLINE or the service LOADING is in the progress")
@@ -437,7 +455,7 @@ def get_metadata_hash(metadata_f, cwd=None):
             metadata_json["ticker"],
         )
         raise ValueError(
-            f"Ticker does not match patter: 3-5 chars long, A-Z and 0-9 characters only. Got {metadata_json['ticker']}"
+            f"Ticker does not match patter: 3-5 chars long, A-Z and 0-9 characters only. Got {metadata_json['ticker']}"  # noqa
         )
 
     if len(metadata_json["description"]) > 255:
@@ -446,7 +464,7 @@ def get_metadata_hash(metadata_f, cwd=None):
             len(metadata_json["description"]),
         )
         raise ValueError(
-            f"Pool description field value exceeds 255 characters. Length: {len(metadata_json['description'])}"
+            f"Pool description field value exceeds 255 characters. Length: {len(metadata_json['description'])}"  # noqa
         )
 
     args = [
