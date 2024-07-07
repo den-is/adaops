@@ -7,7 +7,7 @@ Mainly it is wrapper around **cardano-cli** and bunch of other helpful methods.
 
 ## Requirements
 - **cardano-cli** - binary should be discoverable in the `$PATH`
-- **v1.27** - is a minimum supported version of cardano-cli (__cardano-node__)
+- **v8.1.2** - is a minimum supported version of cardano-cli (__cardano-node__)
 - **CARDANO_NODE_SOCKET_PATH** - Required for online operations. Env variable should be declared and pointing to existing socker of running cardano-node process.
 - Python 3.7+
 
@@ -38,9 +38,12 @@ Add `.env` file in the root of your project
 
 |ENV                     |Default Value| Description                                                       |
 |------------------------|-------------|-------------------------------------------------------------------|
-|ADAOPS_CARDANO_CLI      |"cardano-cli"|Path to "cardano-cli" either found in $PATH or full path to binary |
-|ADAOPS_NETWORK          |"mainnet"    |Cardano network to operate on. Possible values: "mainnet", "preprod", "preview"|
-|CARDANO_NODE_SOCKET_PATH|             |Not configured using `.env`. Your env should provide it.           |
+|ADAOPS_CARDANO_CLI      |"cardano-cli"|Path to "cardano-cli" either found in $PATH or full path to binary
+|CARDANO_NODE_NETWORK_ID |"mainnet"    |Cardano network to operate on. Possible values: "mainnet", "preprod", "preview"
+|CARDANO_NODE_SOCKET_PATH|             |
+|CARDANO_ERA             |             |Supports "legacy", and all other standard era names which can be seen in cardano-cli command groups
+|CARDANO_CLI_LEGACY_COMMANDS |             |Use legacy commands under "legacy" commands group. Legacy commands might require era argument
+
 
 ## Example usage
 ```py
