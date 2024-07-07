@@ -129,7 +129,7 @@ def find_asset_utxo(utxos_json, asset_name, policy_id=None):
         utxos_json - address balance, JSON that holds all information about address UTXOS with assets
         asset_name - hex string. Asset name you are filtering against
         policy_id - hex string. Policy ID to make search more specific
-    """
+    """  # noqa
     utxos = []
     for utxo, assets_map in utxos_json.items():
         if assets_map.get("tokens", False):
@@ -166,7 +166,7 @@ def get_assets_str(utxos_json, utxo, asset_name="", policy_id=None, asset_amount
     #         Each token should have own asset_amount to deduct from the base assets balance.
     ### TODO: What if asset count drops to 0 - not to include that asset in output?
     #         I.e. situation when sending all tokens to someone else or burning.
-    """
+    """  # noqa
 
     utxo_balance = utxos_json[utxo]
     utxo_tokens = utxo_balance.get("tokens", None)

@@ -117,7 +117,7 @@ def get_era_arg(cardano_era=None, use_legacy_commands=False):
             ", ".join(eras_lst),
         )
         raise ValueError(
-            f"Selected era {cardano_era.lower()} argument is not in the list of available era arguments: {', '.join(eras_lst)}"
+            f"Selected era {cardano_era.lower()} argument is not in the list of available era arguments: {', '.join(eras_lst)}"  # noqa
         )
     else:
         cardano_era = cardano_era.lower()

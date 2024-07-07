@@ -270,7 +270,7 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
     Sources:
     https://docs.cardano.org/native-tokens/minimum-ada-value-requirement
     https://github.com/input-output-hk/cardano-ledger/blob/8b6f8e1a75034ca66fd66a39d437252eec927d71/doc/explanations/min-utxo-alonzo.rst
-    """
+    """  # noqa
 
     _protocol_fpath = check_file_exists(protocol_fpath)
 
@@ -332,7 +332,7 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
             # echo -n $1 | xxd -b -ps -c 80 | tr -d '\n'
             # input: b3c95a579b99059f521f8a1a78a75b94
             # correct result: 6233633935613537396239393035396635323166386131613738613735623934
-            # wrong result: 2d6e2062336339356135373962393930353966353231663861316137386137356239340a
+            # wrong result: 2d6e2062336339356135373962393930353966353231663861316137386137356239340a # noqa
 
             pidCollector.append(asset_hash_policy)
             assetsCollector.append(f"{asset_hash_policy}{asset_hash_hexname}")
