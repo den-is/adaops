@@ -70,7 +70,7 @@ def net_arg(net):
         )
 
     if network["type"] == "testnet":
-        return ("--testnet", network["network_magic"])
+        return ("--testnet-magic", network["network_magic"])
 
     return ("--mainnet",)
 
