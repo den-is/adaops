@@ -191,15 +191,7 @@ def get_balances(address, user_utxo=None):
 
     check_socket_env_var()
 
-    args = [
-        "query",
-        "utxo",
-        "--address",
-        address,
-        *NET_ARG,
-        "--out-file",
-        "/dev/stdout",
-    ]
+    args = ["query", "utxo", "--address", address, *NET_ARG, "--output-json"]
 
     result = cardano_cli.run(*args)
 
