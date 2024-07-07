@@ -106,6 +106,8 @@ def get_legacy_era_arg(cardano_era, use_legacy_commands=False):
         "babbage": "--babbage-era",
     }
 
+    legacy_eras_list = list(eras_legacy_args_map.keys())
+
     # if cardano_era is not set, default to babbage era
     # empty cardano-node probably means that user is trying to use top level legacy commands
     _cardano_era = "babbage"
@@ -116,14 +118,14 @@ def get_legacy_era_arg(cardano_era, use_legacy_commands=False):
         logger.info(
             "CARDANO_ERA ENV variable is not set, going to use 'babbage' era by default",
         )
-    elif _cardano_era not in list(eras_legacy_args_map.keys()) and use_legacy_commands:
+    elif _cardano_era not in legacy_eras_list and use_legacy_commands:
         logger.error(
             "%s era is not in the list of legacy eras which might require era arg: %s",
             _cardano_era,
-            ", ".join(list(eras_legacy_args_map.keys())),
+            ", ".join(legacy_eras_list),
         )
         raise ValueError(
-            f"Selected era {cardano_era.lower()} argument is not in the list of available era arguments: {', '.join(list(eras_legacy_args_map.keys()))}"  # noqa
+            f"Selected era {cardano_era.lower()} argument is not in the list of available era arguments: {', '.join(legacy_eras_list)}"  # noqa
         )
     else:
         _cardano_era = cardano_era.lower()
