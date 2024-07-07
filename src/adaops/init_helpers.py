@@ -1,7 +1,6 @@
 # make sure to not import any other adaops modules here, to avoid circular imports
 
 import logging
-import os
 
 logger = logging.getLogger(__name__)
 
