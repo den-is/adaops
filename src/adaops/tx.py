@@ -507,7 +507,7 @@ def view_tx_info(tx_file=None, tx_body_file=None):
         args = ["transaction", "view", "--tx-body-file", tx_body_file]
     else:
         check_file_exists(tx_file)
-        args = ["transaction", "view", "--tx-file", tx_file]
+        args = ["transaction", "view", "--tx-file", tx_file, "--output-json"]
 
     result = cardano_cli.run(*args)
 
