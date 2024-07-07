@@ -52,6 +52,8 @@ def get_truthy_value(val):
 
 def net_arg(net):
     """Return cardano-cli network argument as a tuple
+    Depends on CARDANO_NODE_NETWORK_ID env var.
+    We explicitly set network ID for cardano-cli commands which accept this argument.
 
     Tuple will be unpacked into list of arguments.
 
@@ -75,7 +77,8 @@ def net_arg(net):
     return ("--mainnet",)
 
 
-def get_era_arg(cardano_era=None, use_legacy_commands=False):
+# TODO: To completely deprecate and drop legacy era arguments in all commands
+def get_legacy_era_arg(cardano_era, use_legacy_commands=False):
     """Return cardano-cli era argument for legacy commands or empty string for non-legacy commands.
     Returns string in format '--<era>-era' or empty string.
     Depends on CARDANO_ERA ENV variable.
@@ -94,8 +97,6 @@ def get_era_arg(cardano_era=None, use_legacy_commands=False):
     if not use_legacy_commands:
         return ""
 
-    eras_lst = ("byron", "shelley", "allegra", "mary", "alonzo", "babbage")
-
     eras_legacy_args_map = {
         "byron": "--byron-era",
         "shelley": "--shelley-era",
@@ -105,31 +106,26 @@ def get_era_arg(cardano_era=None, use_legacy_commands=False):
         "babbage": "--babbage-era",
     }
 
-    if not cardano_era:
+    # if cardano_era is not set, default to babbage era
+    # empty cardano-node probably means that user is trying to use top level legacy commands
+    _cardano_era = "babbage"
+    if isinstance(cardano_era, str):
+        _cardano_era = cardano_era.lower()
+
+    if not _cardano_era:
         logger.info(
-            "CARDANO_ERA ENV variable is not set, going to use 'babbage' era as default",
+            "CARDANO_ERA ENV variable is not set, going to use 'babbage' era by default",
         )
-        cardano_era = "babbage"
-    elif cardano_era.lower() not in eras_lst and use_legacy_commands:
+    elif _cardano_era not in list(eras_legacy_args_map.keys()) and use_legacy_commands:
         logger.error(
-            "%s era is not in the list of available eras: %s",
-            cardano_era,
-            ", ".join(eras_lst),
+            "%s era is not in the list of legacy eras which might require era arg: %s",
+            _cardano_era,
+            ", ".join(list(eras_legacy_args_map.keys())),
         )
         raise ValueError(
             f"Selected era {cardano_era.lower()} argument is not in the list of available era arguments: {', '.join(eras_lst)}"  # noqa
         )
     else:
-        cardano_era = cardano_era.lower()
+        _cardano_era = cardano_era.lower()
 
-    # TODO: support non legacy commands as well
-    ## non legacy commands are grouped under era commnda group, like `cardano-cli conway ...`
-    if use_legacy_commands:
-        era_arg = eras_legacy_args_map.get(cardano_era.lower(), None)
-        if not era_arg:
-            raise ValueError(
-                f"Selected era '{cardano_era.lower()}' if not available for legacy commands."
-                " Check if ERA has own command group, instead of using it as an argument."
-            )
-        else:
-            return era_arg
+    return eras_legacy_args_map.get(_cardano_era, None)

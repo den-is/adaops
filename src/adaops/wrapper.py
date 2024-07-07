@@ -26,6 +26,12 @@ class CardanoCLI:
         all_kwargs = {**self.init_kwargs, **kwargs}
 
         command_group = []
+        # if requesting legacy commands or era is not set, use legacy commands
+        # commands under legacy group require era argument --<era-name>-era
+        # at the moment of writing, and node v8.9.4 cli v8.20.3.0 legacy group commands
+        # exist in the top level of the cli, so we explicitly set the group to "legacy"
+        # if cardano_era not provided, that means we are using legacy commands
+        # (at least trying to use top-level legacy commands)
         if self.use_legacy_commands or not self.cardano_era:
             command_group = ["legacy"]
         else:
