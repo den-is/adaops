@@ -155,6 +155,7 @@ def get_tx_fee(
     tx_out_count=1,
     witnesses=1,
     byron_witnesses=0,
+    reference_script_size=0,
     protocol_fpath="../protocol.json",
     cwd=None,
 ):
@@ -190,6 +191,8 @@ def get_tx_fee(
         witnesses,
         "--byron-witness-count",
         byron_witnesses,
+        "--reference-script-size",
+        reference_script_size,
         "--protocol-params-file",
         _protocol_fpath,
         *NET_ARG,
