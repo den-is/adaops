@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class CardanoCLI:
-    def __init__(self, cardano_binary, **kwargs):
+    def __init__(self, cardano_binary, cardano_era, use_legacy_commands, **kwargs):
         binary_path = shutil.which(cardano_binary)
 
         if binary_path is None:
@@ -18,12 +18,26 @@ class CardanoCLI:
 
         self.cardano_binary = cardano_binary
         self.binary_path = binary_path
+        self.cardano_era = cardano_era
+        self.use_legacy_commands = use_legacy_commands
         self.init_kwargs = kwargs
 
     def run(self, *args, **kwargs):
         all_kwargs = {**self.init_kwargs, **kwargs}
 
-        command = [self.cardano_binary] + [str(arg) for arg in args]
+        command_group = []
+        # if requesting legacy commands or era is not set, use legacy commands
+        # commands under legacy group require era argument --<era-name>-era
+        # at the moment of writing, and node v8.9.4 cli v8.20.3.0 legacy group commands
+        # exist in the top level of the cli, so we explicitly set the group to "legacy"
+        # if cardano_era not provided, that means we are using legacy commands
+        # (at least trying to use top-level legacy commands)
+        if self.use_legacy_commands or not self.cardano_era:
+            command_group = ["legacy"]
+        else:
+            command_group = [self.cardano_era.lower()]
+
+        command = [self.cardano_binary] + command_group + [str(arg) for arg in args]
 
         command_str = " ".join([str(arg) for arg in command])
 

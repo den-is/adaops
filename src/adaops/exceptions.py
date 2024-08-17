@@ -7,7 +7,7 @@ class NodeDown(AdaopsException):
 
     def __init__(
         self,
-        msg="cardano-node service is DOWN or LOADING is in progress. cardano-node socket is not responding.",
+        msg="cardano-node service is DOWN or LOADING is in progress. cardano-node socket is not responding.",  # noqa
     ):
         super().__init__(msg)
 

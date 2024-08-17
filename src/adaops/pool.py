@@ -23,7 +23,7 @@ def get_pool_id(cold_vkey="cold.vkey", output_format="hex", cwd=None):
     Raises:
         ValueError: If output_format is not "hex" or "bech32"
         BadCmd: Was not able to get pool ID
-    """
+    """  # noqa
 
     if output_format not in ["hex", "bech32"]:
         logger.error(
@@ -66,7 +66,7 @@ def get_pool_stake_snapshot(pool_id):
     Raises:
         BadCmd: Was not able to get blockchain stakes snapshot
         ValueError: Was not able to read Stakes Snapshot JSON
-    """
+    """  # noqa
 
     check_socket_env_var()
 
@@ -108,7 +108,7 @@ def get_pool_params(pool_id):
     Raises:
         BadCmd: Was not able to get pool params
         ValueError: Was not able to decode Pool Params JSON
-    """
+    """  # noqa
 
     check_socket_env_var()
 

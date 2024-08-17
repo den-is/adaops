@@ -4,7 +4,7 @@ import math
 import time
 from timeit import default_timer as timer
 
-from adaops import NET_ARG, cardano_cli
+from adaops import LEGACY_ERA_ARG, NET_ARG, cardano_cli
 from adaops.exceptions import BadCmd
 from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup, get_balances
 
@@ -57,29 +57,6 @@ def build_tx(
         RuntimeError: Got "minting_script_file", but not a "mint"string . Both are required.
         BadCmd: Was not able to build Transaction File
     """
-
-    eras_args = [
-        "",
-        None,
-        "--byron-era",
-        "--shelley-era",
-        "--allegra-era",
-        "--mary-era",
-        "--alonzo-era",
-        "--babbage-era",
-    ]
-
-    if era_arg not in eras_args:
-        logger.error(
-            "Selected era %s argument is not in the list of available era arguments: %s",
-            era_arg,
-            eras_args,
-        )
-        raise ValueError(
-            f"Selected era {era_arg} argument is not in the list of available era arguments: {eras_args}"
-        )
-    elif not era_arg:
-        era_arg = ""
 
     tx_in_args = " ".join([f"--tx-in {utxo}" for utxo in tx_in_list])
 
@@ -137,7 +114,7 @@ def build_tx(
             [
                 "transaction",
                 "build-raw",
-                era_arg,
+                LEGACY_ERA_ARG,
                 *tx_in_args.split(" "),
                 *tx_out_args.split(" "),
                 *invalid_hereafter_arg.split(" "),
@@ -178,6 +155,7 @@ def get_tx_fee(
     tx_out_count=1,
     witnesses=1,
     byron_witnesses=0,
+    reference_script_size=0,
     protocol_fpath="../protocol.json",
     cwd=None,
 ):
@@ -213,6 +191,8 @@ def get_tx_fee(
         witnesses,
         "--byron-witness-count",
         byron_witnesses,
+        "--reference-script-size",
+        reference_script_size,
         "--protocol-params-file",
         _protocol_fpath,
         *NET_ARG,
@@ -252,34 +232,10 @@ def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
 
     _protocol_fpath = check_file_exists(protocol_fpath)
 
-    eras_args = [
-        "",
-        None,
-        "--byron-era",
-        "--shelley-era",
-        "--allegra-era",
-        "--mary-era",
-        "--alonzo-era",
-        "--babbage-era",
-    ]
-
-    if era_arg not in eras_args:
-        logger.error(
-            "Selected era %s argument is not in the list of available era arguments: %s",
-            era_arg,
-            eras_args,
-        )
-        raise ValueError(
-            f"Selected era {era_arg} argument is not in the list of available era arguments: {eras_args}"
-        )
-    elif not era_arg:
-        era_arg = ""
-
     args = [
         "transaction",
         "calculate-min-required-utxo",
-        "calculate-min-required-utxo",
-        era_arg,
+        LEGACY_ERA_ARG,
         "--protocol-params-file",
         _protocol_fpath,
         "--tx-out",
@@ -317,7 +273,7 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
     Sources:
     https://docs.cardano.org/native-tokens/minimum-ada-value-requirement
     https://github.com/input-output-hk/cardano-ledger/blob/8b6f8e1a75034ca66fd66a39d437252eec927d71/doc/explanations/min-utxo-alonzo.rst
-    """
+    """  # noqa
 
     _protocol_fpath = check_file_exists(protocol_fpath)
 
@@ -379,7 +335,7 @@ def min_utxo_math(tx_out, protocol_fpath, hex_name=True, era="alonzo"):
             # echo -n $1 | xxd -b -ps -c 80 | tr -d '\n'
             # input: b3c95a579b99059f521f8a1a78a75b94
             # correct result: 6233633935613537396239393035396635323166386131613738613735623934
-            # wrong result: 2d6e2062336339356135373962393930353966353231663861316137386137356239340a
+            # wrong result: 2d6e2062336339356135373962393930353966353231663861316137386137356239340a # noqa
 
             pidCollector.append(asset_hash_policy)
             assetsCollector.append(f"{asset_hash_policy}{asset_hash_hexname}")
@@ -554,7 +510,7 @@ def view_tx_info(tx_file=None, tx_body_file=None):
         args = ["transaction", "view", "--tx-body-file", tx_body_file]
     else:
         check_file_exists(tx_file)
-        args = ["transaction", "view", "--tx-file", tx_file]
+        args = ["transaction", "view", "--tx-file", tx_file, "--output-json"]
 
     result = cardano_cli.run(*args)
 
