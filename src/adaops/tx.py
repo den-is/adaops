@@ -507,12 +507,13 @@ def view_tx_info(tx_file=None, tx_body_file=None):
 
     if tx_body_file and not tx_file:
         check_file_exists(tx_body_file)
-        args = ["transaction", "view", "--tx-body-file", tx_body_file]
+        args = ["transaction", "view", "--tx-body-file", tx_body_file, "--output-json"]
     else:
         check_file_exists(tx_file)
         args = ["transaction", "view", "--tx-file", tx_file, "--output-json"]
 
-    result = cardano_cli.run(*args)
+    # cmd_group="debug" since cardano-cli 9.4.1.0
+    result = cardano_cli.run(*args, cmd_group="debug")
 
     if result["rc"] != 0:
         logger.error("Was not able to get transaction info")
