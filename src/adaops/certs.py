@@ -170,7 +170,7 @@ def generate_vote_delegation_cert(
         ValueError: Provide only one of `always_abstain`, `always_no_confidence` or `drepid_hash`
     """
 
-    if not all([always_abstain, always_no_confidence, drepid]):
+    if not any([always_abstain, always_no_confidence, drepid]):
         logger.error(
             "Provide only one of `always_abstain`, `always_no_confidence` or `drepid_hash`"
         )
