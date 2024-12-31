@@ -92,7 +92,7 @@ def get_pool_stake_snapshot(pool_id):
     try:
         output = json.loads(result["stdout"])
     except (JSONDecodeError, ValueError) as err:
-        logger.error("Was not able to read Stakes Snapshot JSON", exc_info=1)
+        logger.error("Was not able to read Stakes Snapshot JSON", exc_info=True)
         raise ValueError("Was not able to read Stakes Snapshot JSON") from err
 
     return output
@@ -131,7 +131,7 @@ def get_pool_params(pool_id):
     try:
         output = json.loads(result["stdout"])
     except (JSONDecodeError, ValueError) as err:
-        logger.error("Was not able to decode Pool Params JSON", exc_info=1)
+        logger.error("Was not able to decode Pool Params JSON", exc_info=True)
         raise ValueError("Was not able to decode Pool Params JSON") from err
 
     return output

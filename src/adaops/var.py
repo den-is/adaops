@@ -125,7 +125,7 @@ def get_protocol_params():
         return params
 
     except (JSONDecodeError, ValueError) as err:
-        logger.error("Was not able to get/parse protocol parameters", exc_info=1)
+        logger.error("Was not able to get/parse protocol parameters", exc_info=True)
         raise RuntimeError("Was not able to get/parse protocol parameters") from err
 
 
@@ -204,7 +204,7 @@ def get_balances(address, user_utxo=None):
     try:
         address_balances_json = json.loads(result["stdout"])
     except (JSONDecodeError, ValueError) as err:
-        logger.error("Not able to parse address balances JSON", exc_info=1)
+        logger.error("Not able to parse address balances JSON", exc_info=True)
         raise ValueError("Not able to parse address balances JSON") from err
 
     output = {}
@@ -258,8 +258,8 @@ def get_utxo_with_enough_balance(utxos_map, amount):
 
     while utxos_map[utxo]["lovelace"] < amount:
         if not utxos:
-            logger.warn("Provided address has no a single UTXO with enough balance")
-            logger.warn(
+            logger.warning("Provided address has no a single UTXO with enough balance")
+            logger.warning(
                 "You might want to join multiple UTXOs in input-list or try a different address"
             )
             return None
@@ -301,7 +301,7 @@ def get_stake_rewards(stake_addr):
     try:
         balances_json = json.loads(result["stdout"])
     except (ValueError, JSONDecodeError) as err:
-        logger.error("Not able to parse stake address rewards balance JSON:", exc_info=1)
+        logger.error("Not able to parse stake address rewards balance JSON:", exc_info=True)
         logger.error(result["stdout"])
         raise ValueError("Not able to parse stake address rewards balance JSON") from err
 
@@ -509,7 +509,7 @@ def download_meta(meta_url, dst_path):
         try:
             _ = json.load(meta_f)
         except ValueError as err:
-            logger.error("Downloaded file is not a valid JSON file.", exc_info=1)
+            logger.error("Downloaded file is not a valid JSON file.", exc_info=True)
             raise ValueError("Downloaded file is not a valid JSON file.") from err
 
     return file_dst

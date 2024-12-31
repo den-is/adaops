@@ -1,6 +1,6 @@
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from icalendar import Calendar, Event
@@ -37,7 +37,7 @@ def calculate_current_epoch(genesis_data):
         )
         raise KeyError('Genesis file is missing "systemStart" or "epochLength" keys') from err
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
     time_since_start = now - cardano_start_dt
     time_since_start_sec = time_since_start.total_seconds()
@@ -77,7 +77,7 @@ def time_in_epoch(genesis_data):
         )
         raise KeyError('Genesis file is missing "systemStart" or "epochLength" keys') from err
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
     time_since_start = now - cardano_start_dt
     time_since_start_sec = time_since_start.total_seconds()
@@ -109,7 +109,7 @@ def time_until_next_epoch(genesis_data):
         )
         raise KeyError('Genesis file is missing "systemStart" or "epochLength" keys') from err
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     cardano_start_dt = datetime.strptime(cardano_start_str, "%Y-%m-%dT%H:%M:%SZ")
     time_since_start = now - cardano_start_dt
     time_since_start_sec = time_since_start.total_seconds()
@@ -166,7 +166,7 @@ def kes_expiration_sec(remaining_kes_periods, genesis_data, network="--mainnet")
             'expiration_timestamp': kes_ekpiration_timestamp, int
         }
     """
-    current_slot = get_current_tip(network=network)
+    current_slot = get_current_tip()
     slot_length = genesis_data.get("slotLength")  # mainnet = 1
     slots_per_kes = genesis_data.get("slotsPerKESPeriod")  # mainnet = 129600
 
