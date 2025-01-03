@@ -41,13 +41,34 @@ NETWORKS = {
 
 def get_truthy_value(val):
     """Return True if val is a truthy value, otherwise False
+
     Truthy values are: True, "True", "true", "1", 1, "yes", "y", "on"
+    or any non zero string, except Falsy values: "", "false", "0", "no", "n", "off".
+    In cases where this functions is called not on "string" ENV variables,
+    but within code, only `True` (bool) and or any int|float bigger or equal to 1
     """
 
     if isinstance(val, str):
-        return val.lower() in ("true", "1", "yes", "y", "on")
+        return val.lower() in (
+            "true",
+            "1",
+            "yes",
+            "y",
+            "on",
+        ) or val.lower() not in (
+            "",
+            "false",
+            "0",
+            "no",
+            "n",
+            "off",
+        )
+    elif isinstance(val, (int, float)) and not isinstance(val, bool):
+        return val >= 1
+    elif isinstance(val, bool):
+        return val
 
-    return val in (True, 1)
+    return False
 
 
 def net_arg(net):
