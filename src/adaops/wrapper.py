@@ -64,8 +64,8 @@ class CardanoCLI:
         returncode = proc.returncode
 
         return {
-            "stdout": stdout.decode("utf-8"),
-            "stderr": stderr.decode("utf-8"),
+            "stdout": stdout,
+            "stderr": stderr,
             "rc": returncode,
             "cmd": command_str,
             "popen_args": all_kwargs,

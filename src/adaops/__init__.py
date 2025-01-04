@@ -5,7 +5,7 @@ from dotenv import dotenv_values
 from adaops.init_helpers import get_legacy_era_arg, get_truthy_value, net_arg
 from adaops.wrapper import CardanoCLI
 
-__version__ = "2.2.1"
+__version__ = "2.2.2"
 
 config = {
     **os.environ,
