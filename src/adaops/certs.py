@@ -19,13 +19,13 @@ def generate_node_cert(
     Requires renewal as soon as KES key pair is renewed
 
     Args:
-        kes_vkey - path to kes.vkey
-        cold_skey - path to cold.skey
-        cold_counter - path to cold.counter
-        kes_period - integer, current KES period
+        kes_vkey - (str) path to kes.vkey
+        cold_skey - (str) path to cold.skey
+        cold_counter - (str) path to cold.counter
+        kes_period - (int) current KES period
 
     Returns:
-        path to node.cert (str)
+        str - path to node.cert
 
     Raises:
         BadCmd: Was not able to generate node cert
@@ -129,84 +129,6 @@ def generate_delegation_cert(output_name, owner_stake_vkey, cold_vkey, cwd=None)
         logger.error(result["stderr"])
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         raise BadCmd("Delegation cert creation didn't work", cmd=result["cmd"])
-
-    return f"{cwd}/{output_name}"
-
-
-def generate_vote_delegation_cert(
-    owner_stake_vkey,
-    output_name,
-    cwd=None,
-    always_abstain=False,
-    always_no_confidence=False,
-    drepid=None,
-):
-    """Generations voting power delegation to a DRrep certificate
-
-    Since Chang#2 fork you should delegate your voting power to a DRepID to withdraw rewards.
-    This is not related to stake delegation certificate this is only for voting power delegation.
-
-    Provide only one of `always_abstain`, `always_no_confidence` or `drepid_hash`
-    If by mistake you provide more than one: `always_abstain` > `always_no_confidence` > `drepid_hash`
-    I.e. if `always_abstain` is True, then `always_no_confidence` and `drepid_hash` will be ignored
-    If `always_abstain` is False and `always_no_confidence` is True, then `drepid_hash` will be ignored
-
-    Conway cardano-node 10.1.3+ only
-    Runs on an air-gapped offline machine
-
-    Args:
-        owner_stake_vkey - path to pool stake vkey
-        output_name - path to certification file to be created
-        cwd - working directory
-        always_abstain - boolean, always abstain from voting
-        always_no_confidence - boolean, always no confidence in voting
-        drepid - hash of the DRepID
-
-    Returns:
-        path to vote delegation cert file (str)
-
-    Raises:
-        BadCmd: "Vote delegation cert creation didn't work
-        ValueError: Provide only one of `always_abstain`, `always_no_confidence` or `drepid_hash`
-    """
-
-    if not any([always_abstain, always_no_confidence, drepid]):
-        logger.error(
-            "Provide only one of `always_abstain`, `always_no_confidence` or `drepid_hash`"
-        )
-        raise ValueError(
-            "Provide only one of `always_abstain`, `always_no_confidence` or `drepid_hash`"
-        )
-
-    drep_action_arg = ""
-
-    if drepid:
-        # TODO: Add drep key hash validation
-        drep_action_arg = f"--drep-key-hash {drepid}"
-
-    if always_no_confidence:
-        drep_action_arg = "--always-no-confidence"
-
-    if always_abstain:
-        drep_action_arg = "--always-abstain"
-
-    args = [
-        "stake-address",
-        "vote-delegation-certificate",
-        "--stake-verification-key-file",
-        owner_stake_vkey,
-        *drep_action_arg.split(" "),
-        "--out-file",
-        output_name,
-    ]
-
-    result = cardano_cli.run(*args, cwd=cwd)
-
-    if result["rc"] != 0:
-        logger.error("Vote delegation cert creation didn't work")
-        logger.error(result["stderr"])
-        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
-        raise BadCmd("Vote delegation cert creation didn't work", cmd=result["cmd"])
 
     return f"{cwd}/{output_name}"
 
