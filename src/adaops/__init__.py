@@ -1,9 +1,14 @@
+import logging
 import os
+import sys
 
 from dotenv import dotenv_values
 
 from adaops.init_helpers import get_legacy_era_arg, get_truthy_value, net_arg
 from adaops.wrapper import CardanoCLI
+
+logger = logging.getLogger(__name__)
+
 
 __version__ = "2.2.2"
 
@@ -16,6 +21,10 @@ config = {
 CARDANO_CLI_PATH = config.get("ADAOPS_CARDANO_CLI", "cardano-cli")
 
 CARDANO_ERA = os.getenv("CARDANO_ERA", "").lower()
+
+if not CARDANO_ERA:
+    logger.error("CARDANO_ERA is not set. Exiting.")
+    sys.exit(1)
 
 # NET_ARG returns --mainnet or --testnet <network_magic>
 # Depends on the official env var `CARDANO_NODE_NETWORK_ID` and its values
