@@ -1,6 +1,6 @@
 # adaops - Cardano CLI operations automation
 
-Python library to help automate various cardano operations using Python.
+Python library to help automate various cardano operations using Python.  
 Mainly it is wrapper around **cardano-cli** and bunch of helpful methods.
 
 :warning::hammer_and_wrench: **Under development. Fasten seat belt and wear helmet!** :construction_worker:
