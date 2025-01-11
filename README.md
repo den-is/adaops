@@ -3,7 +3,7 @@
 Python library to help automate various cardano operations using Python.
 Mainly it is wrapper around **cardano-cli** and bunch of helpful methods.
 
-:warning::hammer_and_wrench: Under development. Fasten seat belt and wear helmet! :construction_worker:
+:warning::hammer_and_wrench: **Under development. Fasten seat belt and wear helmet!** :construction_worker:
 
 - This is work in progress. Depends on my mood, motivation and available free time
 - contributions and suggestions are welcome
