@@ -2,6 +2,7 @@ import json
 import logging
 import math
 import time
+from json import JSONDecodeError
 from timeit import default_timer as timer
 
 from adaops import LEGACY_ERA_ARG, NET_ARG, cardano_cli
@@ -195,6 +196,7 @@ def get_tx_fee(
         reference_script_size,
         "--protocol-params-file",
         _protocol_fpath,
+        "--output-json",
         *NET_ARG,
     ]
 
@@ -206,9 +208,12 @@ def get_tx_fee(
         logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
         raise BadCmd("Was not able to calculate a transaction fee", cmd=result["cmd"])
 
-    tx_fee_lovelace = int(result["stdout"].split(" ")[0])
-
-    return tx_fee_lovelace
+    try:
+        fee_lovelace = json.loads(result["stdout"])["fee"]
+        return fee_lovelace
+    except (JSONDecodeError, ValueError) as err:
+        logger.error("Was not able to parse JSON output", exc_info=True)
+        raise ValueError("Was not able to parse JSON output") from err
 
 
 def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
