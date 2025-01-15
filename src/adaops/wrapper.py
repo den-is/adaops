@@ -48,7 +48,12 @@ class CardanoCLI:
         )
 
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **all_kwargs
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            **all_kwargs,
         )
 
         try:
