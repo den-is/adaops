@@ -1,6 +1,5 @@
 import json
 import logging
-import math
 import time
 from json import JSONDecodeError
 from timeit import default_timer as timer
@@ -34,17 +33,26 @@ def build_tx(
 
     Is able to generate transactions:
     - Between two or more peers - "simple transaction between receiving addresses"
-    - Withdrawing staking rewards from a stake address.
-    - Registering certificates on the blockchain.
+    - Withdrawing staking rewards from a stake address
+    - Registering certificates on the blockchain
+    - Sending transaction with metadata attached. JSON metadata file should be provided.
+    - Mint native tokens
 
     Args:
         tx_in_list  - list of input transaction hashes with index. list of strings.
                     string format: "tx_hash#tx_idx"
         tx_out_list - list of output/destination addresses. string format: "address+amount"
+        fee - transaction fee in Lovelaces. For draft transactions, since "Conway" fee should be something real such as 200_000
+        invalid_hereafter - "now_slot + int" - slot number after which the transaction is invalid
+        invalid_before - known slot number if feature before transaction should be submitted
         withdrawal  - string. if provided should be in form "stake_addr+withdrawal_amount"
         certs - certificates to include and register on blockchain.
                 should be list of strings representing full path to certificates.
-        output_fname - convention used in many examples:
+        mint - string. minting policy string. Example: "1 policyid.tokenname + 1 policyid.tokenname2"
+                where tokenname is hex string
+        minting_script_file - string. mint policy sctipt file path
+        output_fname - string. output file path.
+                        convention used in many examples:
                         "tx.draft" for a transaction draft
                         "tx.raw" for the actual transaction.
 
