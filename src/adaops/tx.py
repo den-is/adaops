@@ -23,7 +23,6 @@ def build_tx(
     minting_script_file=None,
     metadata_file=None,
     output_fname="tx.draft",
-    era_arg=None,
     extra_args=None,
     draft=True,
     cwd=None,
@@ -224,7 +223,7 @@ def get_tx_fee(
         raise ValueError("Was not able to parse JSON output") from err
 
 
-def min_utxo(tx_out, protocol_fpath, era_arg="--alonzo-era"):
+def min_utxo(tx_out, protocol_fpath):
     """Calculates minimum required UTXO amount in tx_out to send with assets
     Since Alonzo era.
 
