@@ -10,7 +10,7 @@ from adaops.wrapper import CardanoCLI
 logger = logging.getLogger(__name__)
 
 
-__version__ = "2.3.1"
+__version__ = "2.3.2"
 
 config = {
     **os.environ,
