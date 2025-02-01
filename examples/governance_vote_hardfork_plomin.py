@@ -47,8 +47,9 @@ logging.basicConfig(
 console_log = logging.StreamHandler()
 console_log.setLevel(logging.DEBUG)
 console_log.setFormatter(logging.Formatter(fmt=log_msg_fmt, datefmt=log_date_fmt))
-## Create a Vote file ----------------------------------------------------------
+logging.getLogger("").addHandler(console_log)
 
+## Create a Vote file ----------------------------------------------------------
 vote_file = governance_action_vote_with_pool(
     governance_action_tx_id=ACTION_UTXO_ID,
     governance_action_index=ACTION_UTXO_IDX,
