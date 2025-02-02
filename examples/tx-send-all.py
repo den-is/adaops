@@ -89,7 +89,7 @@ def transaction(
     # invalid_hereafter slot can be set too
     # amount to send in tx_out_list is not precisely but is known to - in our case it is "{dst_addr}+{total_amount}"
 
-    current_tip = int(get_current_tip())
+    current_tip = get_current_tip()
 
     tx_draft = build_tx(
         tx_in_list=input_list,
@@ -123,7 +123,7 @@ def transaction(
         dst_amount,
     )
 
-    current_tip = int(get_current_tip())
+    current_tip = get_current_tip()
 
     final_output_list = [f"{dst_addr}+{dst_amount}"]
 

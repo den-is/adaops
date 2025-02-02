@@ -107,7 +107,7 @@ def transaction(
     # amount to send in tx_out_list is not precice but can be approximate
     #   in our case it is "{src_addr}+{utxo_balance - amount}", f"{dst_addr}+{amount}"
 
-    current_tip = int(get_current_tip())
+    current_tip = get_current_tip()
 
     tx_draft = build_tx(
         tx_in_list=input_list,
@@ -150,7 +150,7 @@ def transaction(
         dst_amount,
     )
 
-    current_tip = int(get_current_tip())
+    current_tip = get_current_tip()
 
     final_output_list = [f"{src_addr}+{src_remainder}", f"{dst_addr}+{dst_amount}"]
 
