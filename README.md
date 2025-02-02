@@ -20,7 +20,7 @@ Mainly it is wrapper around **cardano-cli** and bunch of helpful methods.
 - **cardano-cli** - binary should be discoverable in the `$PATH`
 - **v10.1.1.0** - is a minimum supported version of cardano-cli
 - **CARDANO_NODE_SOCKET_PATH** - Required for online operations. Env variable should be declared and pointing to existing socker of running cardano-node process.
-- Python 3.9+
+- Python 3.10+
 
 ## Installation
 
