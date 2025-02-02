@@ -8,7 +8,7 @@ authors = [
     {name = "Denis Iskandarov", email = "denis@cloudboom.io"},
 ]
 description = "A wrapper ops library mostly around cardano-cli to automate various CLI scenarios."
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["cardano", "ada", "blockchain", "crypto", "cryptocurrency", "cardano-cli", "cardano-node"]
 license = {text = "MIT"}
 classifiers = [

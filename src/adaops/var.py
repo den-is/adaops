@@ -17,7 +17,7 @@ from adaops.exceptions import BadCmd, NodeDown
 logger = logging.getLogger(__name__)
 
 
-def check_file_exists(fpath):
+def check_file_exists(fpath) -> Path:
     """Check if file exists and makes path absolute if required
 
     Args:
@@ -42,7 +42,7 @@ def check_file_exists(fpath):
         raise
 
 
-def cmd_str_cleanup(s):
+def cmd_str_cleanup(s) -> str:
     """Remove excess whitespaces from command string"""
 
     if isinstance(s, list):
@@ -55,7 +55,7 @@ def cmd_str_cleanup(s):
     return regex.sub(" ", no_newl)
 
 
-def check_socket_env_var():
+def check_socket_env_var() -> bool:
     """Checks if CARDANO_NODE_SOCKET_PATH env var is set and indicated file exists.
 
     Existing socket file does not mean that cardano-node is running and fully synced.
@@ -135,7 +135,7 @@ def l2a(lovelace):
     Accepts Integer values only.
     Returns Float value
     """
-    if isinstance(lovelace, (int, float, decimal.Decimal)):
+    if isinstance(lovelace, int | float | decimal.Decimal):
         return float(lovelace / 1000000)
 
 
@@ -145,16 +145,16 @@ def a2l(ada):
     Accepts Integer and Float values only.
     Returns Integer value.
     """
-    if isinstance(ada, (float, int, decimal.Decimal)):
+    if isinstance(ada, float | int | decimal.Decimal):
         return int(ada * 1000000)
 
 
-def a2h(ascii_s):
+def a2h(ascii_s) -> str:
     """Converts ASCII string into hex representation string"""
     return hexlify(ascii_s.encode()).decode()
 
 
-def h2a(hex_s):
+def h2a(hex_s) -> str:
     """Converts hex string into ASCII representation string"""
 
     if len(hex_s) % 2 != 0:
@@ -167,7 +167,7 @@ def h2a(hex_s):
     return unhexlify(hex_s).decode()
 
 
-def get_balances(address, user_utxo=None):
+def get_balances(address, user_utxo=None) -> dict:
     """Get all TX hashes with their balance under given address
 
     Runs on online machine.
@@ -240,7 +240,7 @@ def get_balances(address, user_utxo=None):
     return output
 
 
-def get_total_balance(address):
+def get_total_balance(address) -> int:
     """Get total balance for the given address, in Lovelaces
 
     Runs on online machine.
@@ -251,7 +251,7 @@ def get_total_balance(address):
     return sum([txs[tx]["lovelace"] for tx in txs])
 
 
-def get_utxo_with_enough_balance(utxos_map, amount):
+def get_utxo_with_enough_balance(utxos_map, amount) -> str | None:
     """Receives map of UTXos, output from get_balances(addr) and returns singe UTXo with balance more or equal to given amount"""  # noqa
     utxos = list(utxos_map.keys())
     utxo = utxos.pop()
@@ -269,7 +269,7 @@ def get_utxo_with_enough_balance(utxos_map, amount):
     return utxo
 
 
-def get_stake_rewards(stake_addr):
+def get_stake_rewards(stake_addr) -> dict:
     """Get rewards balance of the specified stake_addr
 
     Runs on online machine.
@@ -308,7 +308,7 @@ def get_stake_rewards(stake_addr):
     return balances_json
 
 
-def get_current_tip(item="slot", retries=3, return_json=False):
+def get_current_tip(item="slot", retries=3, return_json=False) -> dict | str | int | float:
     """Get current tip's slot of the blockchain
     By default return current slot.
     Possible "item" options:
@@ -390,7 +390,7 @@ def get_current_tip(item="slot", retries=3, return_json=False):
     return current_tip_item
 
 
-def current_kes_period(current_slot, genesis_data):
+def current_kes_period(current_slot, genesis_data) -> int:
     """Returns Current KES period based on current tip of the network (slot).
     Requires Shelley genesis data file
 
@@ -427,7 +427,7 @@ def expected_slot(genesis_data, byron_genesis_data):
     return expected_slot
 
 
-def get_metadata_hash(metadata_f, cwd=None):
+def get_metadata_hash(metadata_f, cwd=None) -> str:
     """Generates hash for pool's metadata JSON file.
 
     Raises:
@@ -487,7 +487,7 @@ def get_metadata_hash(metadata_f, cwd=None):
     return pool_metadata_hash
 
 
-def download_meta(meta_url, dst_path):
+def download_meta(meta_url, dst_path) -> Path:
     """Downloads Pool's metadata JSON file.
 
     Actually that can be URL to whatever valid JSON file.
