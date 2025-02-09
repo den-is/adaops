@@ -1,5 +1,6 @@
 import logging
 import os
+import shlex
 import shutil
 import subprocess
 
@@ -41,7 +42,7 @@ class CardanoCLI:
 
         command = [self.cardano_binary] + command_group + [str(arg) for arg in args]
 
-        command_str = " ".join([str(arg) for arg in command])
+        command_str = shlex.join(command)
 
         logger.debug(
             "Command to be executed: '%s' with Popen kwargs: '%s'", command_str, all_kwargs

@@ -22,8 +22,8 @@ def build_tx(
     mint=None,
     minting_script_file=None,
     metadata_file=None,
-    output_fname="tx.draft",
     extra_args=None,
+    output_fname="tx.draft",
     draft=True,
     cwd=None,
 ):
@@ -64,14 +64,14 @@ def build_tx(
         RuntimeError: Got "mint" string, but minting-script-file is missing. Both are required.
         RuntimeError: Got "minting_script_file", but not a "mint"string . Both are required.
         BadCmd: Was not able to build Transaction File
-    """
+    """  # noqa
 
     tx_in_args = [arg for item in tx_in_list for arg in ("--tx-in", item)]
 
     tx_out_args = [arg for item in tx_out_list for arg in ("--tx-out", item)]
 
     certs_args = []
-    if isinstance(certs, list | tuple | set) and len(certs) > 0:
+    if isinstance(certs, list | tuple) and len(certs) > 0:
         certs_args = [arg for cert in certs for arg in ("--certificate-file", cert)]
     else:
         logger.error('"certs" argument should be a list. Received: %s', certs)
@@ -121,6 +121,9 @@ def build_tx(
 
     _output_file = ["--out-file", output_fname]
 
+    # convert fee to string early, so if it is 0, filter() will not remove it
+    _fee = ["--fee", str(fee)]
+
     args = list(
         filter(
             None,
@@ -132,11 +135,7 @@ def build_tx(
                 *tx_out_args,
                 *invalid_hereafter_arg,
                 *invalid_before_arg,
-                "--fee",
-                # if you pass fee=0 (usually during a draft tx build)
-                # filter() will remove that value from the list
-                # so convert value to string early
-                str(fee),
+                *_fee,
                 *_output_file,
                 *certs_args,
                 *withdrawal_args,
