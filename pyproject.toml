@@ -36,7 +36,21 @@ readme = {file = ["README.md"], content-type = "text/markdown"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.black]
+line-length = 99
+
 [tool.ruff]
 line-length = 99
-src = ["src"]
-select = ["E", "F", "B", "UP", "RUF"]
+include = [
+    "pyproject.toml",
+    "src/**/*.py",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle (error)
+    "F",   # pyflakes
+    "B",   # bugbear
+    "UP",  # pyupgrade
+    "RUF", # Ruff-specific
+]
