@@ -71,11 +71,13 @@ def build_tx(
     tx_out_args = [arg for item in tx_out_list for arg in ("--tx-out", item)]
 
     certs_args = []
-    if isinstance(certs, list | tuple) and len(certs) > 0:
-        certs_args = [arg for cert in certs for arg in ("--certificate-file", cert)]
-    else:
-        logger.error('"certs" argument should be a list. Received: %s', certs)
-        raise ValueError('"certs" argument should be a list.')
+    if certs:
+        if isinstance(certs, list | tuple):
+            if len(certs) > 0:
+                certs_args = [arg for cert in certs for arg in ("--certificate-file", cert)]
+        else:
+            logger.error('"certs" argument should be a list. Received: %s', str(certs))
+            raise ValueError('"certs" argument should be a list.')
 
     withdrawal_args = []
     if withdrawal:
