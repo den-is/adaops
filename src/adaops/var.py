@@ -174,15 +174,23 @@ def get_balances(address, user_utxo=None) -> dict:
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
     Returns tuple of hashes and their balances
 
-    Example output:
-        {'utxo_hash1#1': {'lovelace': 1000000000},
-        'utxo_hash2#0': {'lovelace': 979279256,
-                        'tokens': {'policy_id_1': {'SecondTesttoken': 9995000,
-                                                    'Testtoken': 9999996
-                                                    }
-                                    }
-                        }
+    Example:
+        ```
+        {
+            'utxo_hash1#1': {
+                'lovelace': 1000000000
+            },
+            'utxo_hash2#0': {
+                'lovelace': 979279256,
+                'tokens': {
+                    'policy_id_1': {
+                        'token1_hexname': 9995000,
+                        'another_token_hexname': 9999996
+                    }
+                }
+            }
         }
+        ```
 
     Raises:
         BadCmd: If was not able to get address balances
@@ -258,7 +266,7 @@ def get_utxo_with_enough_balance(utxos_map, amount) -> str | None:
 
     while utxos_map[utxo]["lovelace"] < amount:
         if not utxos:
-            logger.warning("Provided address has no a single UTXO with enough balance")
+            logger.warning("Provided address has not a single UTXO with enough balance")
             logger.warning(
                 "You might want to join multiple UTXOs in input-list or try a different address"
             )
