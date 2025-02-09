@@ -66,39 +66,42 @@ def build_tx(
         BadCmd: Was not able to build Transaction File
     """
 
-    tx_in_args = " ".join([f"--tx-in {utxo}" for utxo in tx_in_list])
+    tx_in_args = [arg for item in tx_in_list for arg in ("--tx-in", item)]
 
-    tx_out_args = " ".join([f"--tx-out {tx_out_dst}" for tx_out_dst in tx_out_list])
+    tx_out_args = [arg for item in tx_out_list for arg in ("--tx-out", item)]
 
-    if certs is None:
-        certs_args = ""
-    elif isinstance(certs, list):
-        if len(certs) > 0:
-            certs_args = " ".join([f"--certificate-file {cert}" for cert in certs])
+    certs_args = []
+    if isinstance(certs, list | tuple | set) and len(certs) > 0:
+        certs_args = [arg for cert in certs for arg in ("--certificate-file", cert)]
     else:
         logger.error('"certs" argument should be a list. Received: %s', certs)
         raise ValueError('"certs" argument should be a list.')
 
-    withdrawal_args = ""
+    withdrawal_args = []
     if withdrawal:
-        withdrawal_args = f"--withdrawal {withdrawal}"
+        withdrawal_args = ["--withdrawal", withdrawal]
 
-    invalid_hereafter_arg = ""
+    invalid_hereafter_arg = []
     if invalid_hereafter is not None:
-        invalid_hereafter_arg = f"--invalid-hereafter {invalid_hereafter}"
+        invalid_hereafter_arg = ["--invalid-hereafter", str(invalid_hereafter)]
 
-    invalid_before_arg = ""
+    invalid_before_arg = []
     if invalid_before is not None:
-        invalid_before_arg = f"--invalid-before {invalid_before}"
+        invalid_before_arg = ["--invalid-before", str(invalid_before)]
 
-    _extra_args = ""
+    _extra_args = []
     if extra_args:
-        _extra_args = extra_args
+        _extra_args = extra_args.split(" ")
 
-    minting_args = ""
+    minting_args = []
     if mint and minting_script_file:
         check_file_exists(minting_script_file)
-        minting_args = f'--mint="{mint}" --minting-script-file {minting_script_file}'
+        minting_args = [
+            "--mint",
+            mint,
+            "--minting-script-file",
+            minting_script_file,
+        ]
     elif mint and not minting_script_file:
         logger.error('Got "mint" string, but minting-script-file is missing. Both are required.')
         raise RuntimeError(
@@ -110,11 +113,13 @@ def build_tx(
             'Got "minting_script_file", but not a "mint"string . Both are required.'
         )
 
-    metadata_json_file_arg = ""
+    metadata_json_file_arg = []
     if metadata_file:
         logger.info("Got --metadata-json-file. Going to check if it exists.")
         check_file_exists(metadata_file)
-        metadata_json_file_arg = f"--metadata-json-file {metadata_file}"
+        metadata_json_file_arg = ["--metadata-json-file", metadata_file]
+
+    _output_file = ["--out-file", output_fname]
 
     args = list(
         filter(
@@ -123,22 +128,21 @@ def build_tx(
                 "transaction",
                 "build-raw",
                 LEGACY_ERA_ARG,
-                *tx_in_args.split(" "),
-                *tx_out_args.split(" "),
-                *invalid_hereafter_arg.split(" "),
-                *invalid_before_arg.split(" "),
+                *tx_in_args,
+                *tx_out_args,
+                *invalid_hereafter_arg,
+                *invalid_before_arg,
                 "--fee",
                 # if you pass fee=0 (usually during a draft tx build)
                 # filter() will remove that value from the list
                 # so convert value to string early
                 str(fee),
-                "--out-file",
-                output_fname,
-                *certs_args.split(" "),
-                *withdrawal_args.split(" "),
-                *minting_args.split(" "),
-                *metadata_json_file_arg.split(" "),
-                *_extra_args.split(" "),
+                *_output_file,
+                *certs_args,
+                *withdrawal_args,
+                *minting_args,
+                *metadata_json_file_arg,
+                *_extra_args,
             ],
         )
     )
