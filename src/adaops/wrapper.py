@@ -26,7 +26,7 @@ class CardanoCLI:
     def run(self, *args, cmd_group=None, **kwargs):
         all_kwargs = {**self.init_kwargs, **kwargs}
 
-        command_group = []
+        command_group = ""
 
         # if CARDANO_CLI_LEGACY_COMMANDS is set to True, then use legacy commands
         # legacy commands might require LEGACY_ERA_ARG argument such as "--babbage-era", "--alonzo-era", etc
@@ -34,13 +34,13 @@ class CardanoCLI:
         if cmd_group:
             # TODO: check if the command group is valid
             # for example used to set `debug` command group
-            command_group = [cmd_group]
+            command_group = cmd_group
         elif self.use_legacy_commands or not self.cardano_era:
-            command_group = ["legacy"]
+            command_group = "legacy"
         else:
-            command_group = [self.cardano_era.lower()]
+            command_group = self.cardano_era.lower()
 
-        command = [self.cardano_binary] + command_group + [str(arg) for arg in args]
+        command = [self.cardano_binary, command_group] + [str(arg) for arg in args]
 
         command_str = shlex.join(command)
 
