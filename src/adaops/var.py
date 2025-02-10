@@ -175,6 +175,57 @@ def validate_utxo(utxo: str) -> bool:
     return bool(UTXO_REGEX.fullmatch(utxo))
 
 
+def query_utxo(utxo):
+    """Query UTXO balance
+
+    Args:
+        utxo (str): UTXO to query in `utxo#idx` format
+
+    Raises:
+        ValueError - If provided UTXO is not in a correct format `utxo#idx`
+        BadCmd - If was not able to query UTXO and cardano-cli did not return 0 exit code
+    """
+    check_socket_env_var()
+
+    if not validate_utxo(utxo):
+        raise ValueError(f"Provided UTXO '{utxo}' is not in a correct format `utxo#idx`")
+
+    args = ["query", "utxo", "--tx-in", utxo, *NET_ARG, "--output-json"]
+    result = cardano_cli.run(*args)
+    if result["rc"] != 0:
+        logger.error("Was not able to query UTXO %s", utxo)
+        logger.error(result["stderr"])
+        logger.error("Failed command was: %s", cmd_str_cleanup(result["cmd"]))
+        raise BadCmd("Was not able to query UTXO", cmd=cmd_str_cleanup(result["cmd"]))
+
+    try:
+        utxo_balance = json.loads(result["stdout"])
+    except (JSONDecodeError, ValueError) as err:
+        logger.error("Not able to parse UTXO balances JSON", exc_info=True)
+        raise ValueError("Not able to parse UTXO balances JSON") from err
+
+    output = {
+        utxo: {
+            "lovelace": 0,
+            "tokens": {},
+        }
+    }
+
+    if utxo_balance:
+
+        # get lovelace balance
+        output[utxo]["lovelace"] = utxo_balance[utxo]["value"]["lovelace"]
+
+        # get tokens balance
+        if len(utxo_balance[utxo]["value"].keys()) > 1:
+            output[utxo]["tokens"] = {}
+            for key in utxo_balance[utxo]["value"].keys():
+                if key != "lovelace":
+                    output[utxo]["tokens"][key] = utxo_balance[utxo]["value"][key]
+
+    return output
+
+
 def get_balances(address, user_utxo=None) -> dict:
     """Get all TX hashes with their balance under given address
 
