@@ -167,6 +167,14 @@ def h2a(hex_s) -> str:
     return unhexlify(hex_s).decode()
 
 
+def validate_utxo(utxo: str) -> bool:
+    """Validates whether the given string is a correctly formatted Cardano UTXO.
+    Input format should be `utxo#idx`
+    """
+    UTXO_REGEX = re.compile(r"^[0-9a-fA-F]{64}#[0-9]+$")
+    return bool(UTXO_REGEX.fullmatch(utxo))
+
+
 def get_balances(address, user_utxo=None) -> dict:
     """Get all TX hashes with their balance under given address
 
