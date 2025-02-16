@@ -2,7 +2,7 @@ import logging
 
 from adaops import cardano_cli
 from adaops.exceptions import BadCmd
-from adaops.var import check_file_exists, cmd_str_cleanup
+from adaops.var import a2h, check_file_exists, cmd_str_cleanup
 
 logger = logging.getLogger(__name__)
 
@@ -190,3 +190,25 @@ def get_assets_str(utxos_json, utxo, asset_name="", policy_id=None, asset_amount
     all_assets_str = " + ".join(tokens_str_lst)
 
     return all_assets_str
+
+
+def generate_mint_str(policy_id, token_names_to_mint) -> str:
+    """Generate mint string for tokens to generate under the same Policy
+
+    To test hex values of ASCII token names
+        test
+        echo -n "Testtoken" | xxd -ps | tr -d '\n'
+        echo -n "SecondTesttoken" | xxd -ps | tr -d '\n'
+
+    Args:
+        policy_id - Minting Policy ID
+        token_names_to_mint - array of tuples of tokens ASCII names and their amounts
+                              format: [(token_ascii_name_str, amount_int), ...]
+
+    Return:
+        str - tokens mint string (witout addr and lovelace)
+    """
+    per_token_mint_strs = [
+        f"{token[1]} {policy_id}.{a2h(token[0])}" for token in token_names_to_mint
+    ]
+    return " + ".join(per_token_mint_strs)

@@ -8,6 +8,7 @@ import shutil
 import time
 import urllib.request
 from binascii import hexlify, unhexlify
+from collections import defaultdict
 from json import JSONDecodeError
 from pathlib import Path
 
@@ -305,6 +306,63 @@ def get_balances(address, user_utxo=None) -> dict:
                     output[utxo]["tokens"][key] = address_balances_json[utxo]["value"][key]
 
     return output
+
+
+def combine_utxo_balance(*dicts: dict) -> dict:
+    """Merges Token assets comming from multiple UTXOs. Works with one UTXO too.
+
+    Args:
+        *dicts - arbitrary number of dictionaries with assets format {policy1:{token1: amount, ...}, ....}
+                 as returned by query_utxo() or get_balances()
+
+    Returns:
+        dict - combined balance dict in format {"lovelace", total-int, "tokens" :{"policyA": {"tokenY": int_amount}}}
+    Example:
+        ```
+        # Example usage:
+        dict1 = {
+            "lovelace": 5000000,
+            "tokens":{
+                "policy1": {"tokenA": 1000, "tokenB": 500},
+                "policy2": {"tokenC": 200}
+            }
+        }
+
+        dict2 = {
+            "lovelace": 2700000,
+            "tokens":{
+                "policy1": {"tokenA": 300, "tokenB": 200, "tokenD": 100},
+                "policy3": {"tokenE": 700}
+            }
+        }
+
+        merged_balance = combine_utxo_balance(dict1, dict2)
+
+        print(merged_balance)
+        # output
+        # {'lovelace': 7700000,
+        # 'tokens': {'policy1': {'tokenA': 1300, 'tokenB': 700, 'tokenD': 100},
+        #             'policy2': {'tokenC': 200},
+        #             'policy3': {'tokenE': 700}}}
+        ```
+    """  # noqa
+
+    merged = defaultdict(lambda: defaultdict(int))
+    total_lovelace = 0
+
+    for d in dicts:
+        if "lovelace" in d:
+            total_lovelace += d["lovelace"]
+
+        if "tokens" in d:
+            for policy, tokens in d["tokens"].items():
+                for token, amount in tokens.items():
+                    merged[policy][token] += amount
+
+    return {
+        "lovelace": total_lovelace,
+        "tokens": {k: dict(v) for k, v in merged.items()},
+    }
 
 
 def get_total_balance(address) -> int:
