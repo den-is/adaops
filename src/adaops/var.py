@@ -182,9 +182,28 @@ def query_utxo(utxo):
     Args:
         utxo (str): UTXO to query in `utxo#idx` format
 
+    Return:
+        dict - {"utxo#idx": {"lovelace": int, "tokens": {"policyN:{"tokenX":int}}}}
+               Empty {} if utxo has no balance
+
     Raises:
         ValueError - If provided UTXO is not in a correct format `utxo#idx`
         BadCmd - If was not able to query UTXO and cardano-cli did not return 0 exit code
+
+    Example:
+        ```
+            {
+                'utxo_hash2#0': {
+                    'lovelace': 979279256,
+                    'tokens': {
+                        'policy_id_1': {
+                            'token1_hexname': 9995000,
+                            'another_token_hexname': 9999996
+                        }
+                    }
+                }
+            }
+        ```
     """
     check_socket_env_var()
 
