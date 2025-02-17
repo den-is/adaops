@@ -247,7 +247,12 @@ def query_utxo(utxo):
 
 
 def get_balances(address, user_utxo=None) -> dict:
-    """Get all TX hashes with their balance under given address
+    """Get all TX hashes with their balances for given address
+
+    Args:
+        address - str. bech32 address to query
+        user_utxo - str. Optional. UTXO hash to query. If provided, will return only this UTXO hash.
+                    format: "utxo_hash" or "utxo_hash#idx"
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
@@ -385,10 +390,16 @@ def combine_utxo_balance(*dicts: dict) -> dict:
 
 
 def get_total_balance(address) -> int:
-    """Get total balance for the given address, in Lovelaces
+    """Get total lovelace balance for the given address
 
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
+
+    Args:
+        address - str. Bech32 formatted address string
+
+    Returns:
+        int - total lovelace balance
     """  # noqa
 
     txs = get_balances(address=address)
@@ -396,7 +407,11 @@ def get_total_balance(address) -> int:
 
 
 def get_utxo_with_enough_balance(utxos_map, amount) -> str | None:
-    """Receives map of UTXos, output from get_balances(addr) and returns singe UTXo with balance more or equal to given amount"""  # noqa
+    """Returns first UTXO with balance more or equal to given amount
+
+    Receives map of UTXos, output from get_balances(addr)
+    """
+
     utxos = list(utxos_map.keys())
     utxo = utxos.pop()
 
@@ -419,9 +434,26 @@ def get_stake_rewards(stake_addr) -> dict:
     Runs on online machine.
     CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
 
+    Args:
+        stake_addr - str. Bech32 formatted stake address string
+
     Raises:
         BadCmd: If was not able to get rewards balance for stake address
         ValueError: If was not able to parse stake address rewards balance JSON
+
+    Example:
+        As returned by cardano-cli 10.1.1.0
+        ```json
+        [
+            {
+                "address": "stake1bech32address",
+                "delegationDeposit": 2000000,
+                "rewardAccountBalance": 0,
+                "stakeDelegation": null,
+                "voteDelegation": "alwaysAbstain"
+            }
+        ]
+        ```
     """  # noqa
 
     check_socket_env_var()
