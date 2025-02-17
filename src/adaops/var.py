@@ -410,6 +410,9 @@ def get_utxo_with_enough_balance(utxos_map, amount) -> str | None:
     """Returns first UTXO with balance more or equal to given amount
 
     Receives map of UTXos, output from get_balances(addr)
+    Can run on OFFLINE machine if you pass it map with UTXOs in correct format :)
+
+
     """
 
     utxos = list(utxos_map.keys())
@@ -426,6 +429,58 @@ def get_utxo_with_enough_balance(utxos_map, amount) -> str | None:
         utxo = utxos.pop()
 
     return utxo
+
+
+def get_funded_utxo(addr, min_balance_l, user_utxo=None) -> str | None:
+    """Return UTXO with balance >= min_balance, from specified address
+
+    Runs on online machine.
+    CARDANO_NODE_SOCKET_PATH environment variable should be set and pointing to active cardano-node socket.
+    Differs from get_utxo_with_enough_balance() which accepts UTXO map as input
+    get_funded_utxo queries given address online
+
+    Args:
+        addr - str. bech32. source address to check and get UTXO from
+        min_balance_l - int. Minimum required lovelace balance on UTXO
+        user_utxo - str. `[utxo]#[id]` User provided UTXO.
+                    If provided, UTXO balance will be checked if >= min_balance_l and returned to user.
+                    If not provided, random UTXO from source address will be selected
+                    with enough balance, if any.
+
+    Return:
+        utxo - string in `[utxo]#[id]` format or None
+    """
+
+    utxo_hash = None
+
+    balance_hashes = get_balances(addr)
+
+    if not user_utxo:
+        utxo_hash = get_utxo_with_enough_balance(balance_hashes, min_balance_l)
+    else:
+        # Use user provided known utxo hash. makes sure it is in "utxo_hash#idx" format
+        if not validate_utxo(user_utxo):
+            raise ValueError("Bad UTXO string. Make sure it is in `utxo#idx` format.")
+
+        if user_utxo not in list(balance_hashes.keys()):
+            logging.error(
+                f"Provided UTXO is not found under provided address {addr}, utxo {user_utxo}"
+            )
+            # ? should we return None or raise exception?
+            utxo_hash = None
+
+        elif balance_hashes[user_utxo]["lovelace"] < min_balance_l:
+            logging.error(
+                'Provided UTXO\'s "%s" balance %d is less than minimum required balance %d',
+                user_utxo,
+                balance_hashes[user_utxo]["lovelace"],
+                min_balance_l,
+            )
+            # ? should we return None or raise exception?
+            utxo_hash = None
+        else:
+            utxo_hash = user_utxo
+    return utxo_hash
 
 
 def get_stake_rewards(stake_addr) -> dict:
