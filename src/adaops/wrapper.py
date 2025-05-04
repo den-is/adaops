@@ -8,19 +8,29 @@ logger = logging.getLogger(__name__)
 
 
 class CardanoCLI:
-    def __init__(self, cardano_binary, cardano_era, use_legacy_commands, **kwargs):
+    def __init__(self, cardano_binary, cardano_era, **kwargs):
+        """CardanoCLI wrapper for cardano-cli
+
+        Args:
+            cardano_binary: path to the cardano binary
+            cardano_era: cardano era (e.g. 'conway', 'latest', etc.) should be a command group in the cardano-cli
+
+        Raises:
+            ValueError: Binary '{cardano_binary}' is not found in the $PATH
+            ValueError: Binary '{cardano_binary}' is not executable
+        """
+
         binary_path = shutil.which(cardano_binary)
 
         if binary_path is None:
-            raise ValueError(f"Binary '{cardano_binary}' is not found in the $PATH.")
+            raise ValueError(f"Binary '{cardano_binary}' is not found in the $PATH")
 
         if not os.access(binary_path, os.X_OK):
-            raise ValueError(f"Binary '{cardano_binary}' is not executable.")
+            raise ValueError(f"Binary '{cardano_binary}' is not executable")
 
         self.cardano_binary = cardano_binary
         self.binary_path = binary_path
         self.cardano_era = cardano_era
-        self.use_legacy_commands = use_legacy_commands
         self.init_kwargs = kwargs
 
     def run(self, *args, cmd_group=None, **kwargs):
@@ -28,15 +38,10 @@ class CardanoCLI:
 
         command_group = ""
 
-        # if CARDANO_CLI_LEGACY_COMMANDS is set to True, then use legacy commands
-        # legacy commands might require LEGACY_ERA_ARG argument such as "--babbage-era", "--alonzo-era", etc
-        # CARDANO_ERA is always required
         if cmd_group:
             # TODO: check if the command group is valid
             # for example used to set `debug` command group
             command_group = cmd_group
-        elif self.use_legacy_commands or not self.cardano_era:
-            command_group = "legacy"
         else:
             command_group = self.cardano_era.lower()
 

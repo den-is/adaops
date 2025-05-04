@@ -1,6 +1,6 @@
 import logging
 
-from adaops import CARDANO_ERA, NET_ARG, cardano_cli
+from adaops import NET_ARG, cardano_cli
 from adaops.exceptions import BadCmd
 from adaops.var import cmd_str_cleanup
 
@@ -106,10 +106,7 @@ def generate_delegation_cert(output_name, owner_stake_vkey, cold_vkey, cwd=None)
         BadCmd: Stake Delegation cert creation didn't work
     """
 
-    # stake-address under `legacy` command group is using old "delegation-certificate"
     delegation_certificate_arg = "stake-delegation-certificate"
-    if CARDANO_ERA in ("", "legacy"):
-        delegation_certificate_arg = "delegation-certificate"
 
     args = [
         "stake-address",
