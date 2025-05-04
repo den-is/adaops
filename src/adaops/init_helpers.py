@@ -63,7 +63,7 @@ def get_truthy_value(val):
             "n",
             "off",
         )
-    elif isinstance(val, (int, float)) and not isinstance(val, bool):
+    elif isinstance(val, int | float) and not isinstance(val, bool):
         return val >= 1
     elif isinstance(val, bool):
         return val
