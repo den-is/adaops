@@ -4,7 +4,7 @@ import time
 from json import JSONDecodeError
 from timeit import default_timer as timer
 
-from adaops import LEGACY_ERA_ARG, NET_ARG, cardano_cli
+from adaops import NET_ARG, cardano_cli
 from adaops.exceptions import BadCmd
 from adaops.var import check_file_exists, check_socket_env_var, cmd_str_cleanup, get_balances
 
@@ -132,7 +132,6 @@ def build_tx(
             [
                 "transaction",
                 "build-raw",
-                LEGACY_ERA_ARG,
                 *tx_in_args,
                 *tx_out_args,
                 *invalid_hereafter_arg,
@@ -252,7 +251,6 @@ def min_utxo(tx_out, protocol_fpath):
     args = [
         "transaction",
         "calculate-min-required-utxo",
-        LEGACY_ERA_ARG,
         "--protocol-params-file",
         _protocol_fpath,
         "--tx-out",
@@ -377,10 +375,10 @@ def get_tx_id(tx_file=None, tx_body_file=None):
 
     if tx_body_file and not tx_file:
         check_file_exists(tx_body_file)
-        args = ["transaction", "txid", "--tx-body-file", tx_body_file]
+        args = ["transaction", "txid", "--tx-body-file", tx_body_file, "--output-text"]
     else:
         check_file_exists(tx_file)
-        args = ["transaction", "txid", "--tx-file", tx_file]
+        args = ["transaction", "txid", "--tx-file", tx_file, "--output-text"]
 
     result = cardano_cli.run(*list(filter(None, args)))
 

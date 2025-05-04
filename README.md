@@ -61,13 +61,12 @@ pip install -e .
 
 Add `.env` file in the root of your project
 
-| ENV                         | Default Value | Description                                                                                                               |
-| --------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| ADAOPS_CARDANO_CLI          | "cardano-cli" | Path to "cardano-cli" either found in $PATH or full path to binary                                                        |
-| CARDANO_NODE_NETWORK_ID     | "mainnet"     | Cardano network to operate on. Possible values: "mainnet", "preprod", "preview"                                           |
-| CARDANO_NODE_SOCKET_PATH    |               | Required. Path to running cardano-node unix socket                                                                        |
-| CARDANO_ERA                 | "conway"      | Required. Supports "legacy", and all other standard era names which can be seen in cardano-cli command groups             |
-| CARDANO_CLI_LEGACY_COMMANDS | "False"       | Use legacy commands under "legacy" commands group. Legacy commands might require legacy era argument `--babbage-era` etc. |
+| ENV                      | Default Value | Description |
+| ------------------------ | ------------- | ------------|
+| ADAOPS_CARDANO_CLI       | "cardano-cli" | Path to "cardano-cli" either found in $PATH or full path to binary
+| CARDANO_NODE_NETWORK_ID  | "mainnet"     | Cardano network to operate on. Possible values: "mainnet", "preprod", "preview"
+| CARDANO_NODE_SOCKET_PATH |               | Required. Path to running cardano-node unix socket
+| CARDANO_ERA              | "conway"      | Required.
 
 ## Example usage
 
