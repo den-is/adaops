@@ -375,10 +375,10 @@ def get_tx_id(tx_file=None, tx_body_file=None):
 
     if tx_body_file and not tx_file:
         check_file_exists(tx_body_file)
-        args = ["transaction", "txid", "--tx-body-file", tx_body_file]
+        args = ["transaction", "txid", "--tx-body-file", tx_body_file, "--output-text"]
     else:
         check_file_exists(tx_file)
-        args = ["transaction", "txid", "--tx-file", tx_file]
+        args = ["transaction", "txid", "--tx-file", tx_file, "--output-text"]
 
     result = cardano_cli.run(*list(filter(None, args)))
 
