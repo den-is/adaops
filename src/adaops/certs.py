@@ -57,12 +57,18 @@ def generate_node_cert(
     return f"{cwd}/{output_name}"
 
 
-def generate_stake_reg_cert(output_name="stake.cert", stake_vkey="stake.vkey", cwd=None):
+def generate_stake_reg_cert(
+    key_reg_deposit_amt,
+    output_name="stake.cert",
+    stake_vkey="stake.vkey",
+    cwd=None,
+):
     """Generate stake address registration certificate
 
     Runs on an air-gapped offline machine
 
     Args:
+        key_reg_deposit_amt - Key registration deposit amount (min protocol-params.stakeAddressDeposit)
         output_name - name of the output file
         stake_vkey - path to stake.vkey
         cwd - working directory
@@ -79,6 +85,8 @@ def generate_stake_reg_cert(output_name="stake.cert", stake_vkey="stake.vkey", c
         "registration-certificate",
         "--stake-verification-key-file",
         stake_vkey,
+        "--key-reg-deposit-amt",
+        int(key_reg_deposit_amt),
         "--out-file",
         output_name,
     ]
@@ -287,12 +295,19 @@ def generate_deregistration_cert(
 
 def generate_stake_dereg_cert(
     stake_vkey,
+    key_reg_deposit_amt,
     output_name="stake-deregistration.cert",
     cwd=None,
 ):
     """Generates a stake delegation deregistration certificate
 
     Runs on an air-gapped offline machine
+
+    Args:
+        stake_vkey - path to stake.vkey
+        key_reg_deposit_amt - Key registration deposit amount (min protocol-params.stakeAddress
+        output_name - name of the output file
+        cwd - working directory
 
     Returns:
         path to stake delegation deregistration cert file (str)
@@ -306,6 +321,8 @@ def generate_stake_dereg_cert(
         "deregistration-certificate",
         "--stake-verification-key-file",
         stake_vkey,
+        "--key-reg-deposit-amt",
+        int(key_reg_deposit_amt),
         "--out-file",
         output_name,
     ]
